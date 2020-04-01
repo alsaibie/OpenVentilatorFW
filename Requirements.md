@@ -11,9 +11,6 @@ Sensor Interface:
 2. Flow sensor?
 3. 
 
-
-
-
 ### Output requirements
 
 User Info
@@ -32,11 +29,6 @@ Actuation
 A. Pressure Control Mode
 
 B. Volume Control Mode
-
-
-
-
-
 
 ### Safety requirements
 1. Sense deviation from set pressure / volume
