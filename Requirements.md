@@ -38,3 +38,14 @@ B. Volume Control Mode
 5. Sense that flow in = flow out?
 6. 
 7. Sense that CO2 is 
+
+
+
+## Terms Simplified
+
+### PEEP: Positive End-Expiratory Pressure
+What the pressure in the lungs is at the end of the breath cycle. 
+
+### TV: Tidal Volume ($V_T$)
+
+
