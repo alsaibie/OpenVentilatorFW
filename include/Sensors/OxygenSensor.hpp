@@ -3,7 +3,7 @@
 
 #include "board_configuration.hpp"
 #include <Arduino.h>
-
+namespace Sensors{
 struct OxygenSensorParameters{
     int a;
     // ...
@@ -30,5 +30,5 @@ private:
 void write_settings();
 
 };
-
+}
 #endif // OXYGENSENSOR_HPP_

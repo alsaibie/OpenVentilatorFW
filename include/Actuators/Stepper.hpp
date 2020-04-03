@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+namespace Actuators {
 typedef struct {
     const uint32_t pin_count{4};
     uint32_t enable_pin;
@@ -60,5 +61,5 @@ class Stepper {
     uint32_t number_of_steps;
     uint32_t step_num;
 };
-
+}  // namespace Actuators
 #endif

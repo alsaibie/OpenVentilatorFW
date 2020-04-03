@@ -2,21 +2,25 @@
 #define LINEARAXIS_HPP_
 
 #include "Stepper.hpp"
-
+namespace Actuators{
 typedef struct {
     uint32_t gear_ratio;      /* [RPS to mm/s] */
     uint32_t motion_range;    /* [mm] */
     int32_t lower_limit_pos;  /* [mm] */
-    int32_t higher_limit_pos; /* [mm] */
-    int32_t max_acceleration_fwd;
-    int32_t max_acceleration_rev; 
+    int32_t max_pos_fwd; /* [mm] */
+    int32_t max_pos_rev; /* [mm] */
+    uint32_t max_velocity; /* [mm/s] */
+    int32_t max_acc_fwd; /* [mm/s^2] */
+    int32_t max_acc_rev; /* [mm/s^2] */
+
 } LinearAxisConfig_t;
 
+/* Generic Motion Trajectory */
 typedef struct{
     uint8_t * traj_arr;
     uint32_t traj_arr_length;
     uint32_t sample_time;
-    bool cyclical;
+    bool cyclical; /* If cyclical: must be a closed path -> end = start */
 }AxisTrajectory_t;
 
 typedef enum{
@@ -59,5 +63,5 @@ class LinearAxis {
     AxisTrajectory_t posTraj, velTraj, torqTraj;
     const char * axis_name;
 };
-
+}
 #endif /* LINEARAXIS_HPP_ */

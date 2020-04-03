@@ -3,7 +3,7 @@
 
 #include "board_configuration.hpp"
 #include <Arduino.h>
-
+namespace Sensors{
 struct FlowSensorParameters{
     int a;
     // ...
@@ -31,5 +31,6 @@ void write_settings();
 
 
 };
+}
 
 #endif // FLOWSENSOR_HPP_

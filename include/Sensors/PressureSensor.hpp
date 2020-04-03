@@ -4,6 +4,7 @@
 #include "board_configuration.hpp"
 #include <Arduino.h>
 
+namespace Sensors{
 struct PressureSensorParameters{
     int a;
     // ...
@@ -31,5 +32,5 @@ void write_settings();
 
 
 };
-
+}
 #endif // PRESSURESENSOR_HPP_
