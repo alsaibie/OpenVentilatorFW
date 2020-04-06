@@ -38,7 +38,8 @@ typedef MotorDirection_t AxisDirection_t;
 
 class LinearAxis {
     public:
-    LinearAxis(const char *name, LinearAxisConfig_t &cfg): config(cfg){
+    LinearAxis(const char *name, LinearAxisConfig_t &cfg, Stepper &mot)
+    : config(cfg), motor(mot){
         axis_name = name;
     }
 
@@ -62,6 +63,8 @@ class LinearAxis {
     int32_t position, velocity, torque;
     AxisTrajectory_t posTraj, velTraj, torqTraj;
     const char * axis_name;
+
+    Stepper &motor;
 };
 }
 #endif /* LINEARAXIS_HPP_ */
