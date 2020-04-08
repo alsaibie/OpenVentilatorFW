@@ -26,7 +26,7 @@ class PressureSensor : AnalogInterface {
 
     inline void setParameters(PressureSensorParameters_t &param) { parameters = param; }
 
-    inline PressureSensorData_t getReading(void){return pressure_data};
+    inline PressureSensorData_t getReading(void){return pressure_data;};
 
     virtual void spinSampler(uint32_t dt);
 

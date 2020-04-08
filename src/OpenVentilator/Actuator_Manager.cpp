@@ -1,4 +1,5 @@
 #include "OpenVentilator/OpenVentilator.hpp"
+#include "Actuators/LinearAxis.hpp"
 
 /* Pub Topics */
 // Actuator Status?
@@ -22,13 +23,13 @@ class ActuatorManager : public OVThread {
     }
 
    private:
-    static void on_actuator_cmd_receive(const OVTopics::ActuatorCommands_t &msg) {
+    static void on_actuator_cmd_receive(const OVTopics::ActuatorCommands_msg_t &msg) {
         
     }
     /* Pubs */
 
     /* Subs */
-    OVQueueSubscriber<OVTopics::ActuatorCommands_t> actuator_cmd_sub;
+    OVQueueSubscriber<OVTopics::ActuatorCommands_msg_t> actuator_cmd_sub;
 };
 
 void start_actuator_manager() {

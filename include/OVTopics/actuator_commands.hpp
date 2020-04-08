@@ -4,6 +4,17 @@
 
 namespace OVTopics {
 
+typedef enum{
+    Position = 0, 
+    Velocity, 
+    Torque,
+    PositionTrajectory, 
+    VelocityTrajectory, 
+    TorqueTrajectory,
+
+    Num_of_Modes
+}ActuatorCommand_modes_t;
+
 typedef struct {
     struct LinearAxis_ {
         uint32_t acceleration;
@@ -11,7 +22,7 @@ typedef struct {
         uint32_t position;
         uint32_t dir;
     }LeftAxis, RightAxis;
-} ActuatorCommands_t;
+} ActuatorCommands_msg_t;
 
 }  // namespace OVTopics
 

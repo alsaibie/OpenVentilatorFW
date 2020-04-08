@@ -20,15 +20,14 @@ class EmulatorManager : public OVThread {
             thread_lap();
         }
     }
-
    private:
-    static void on_actuator_commands_peek(const OVTopics::ActuatorCommands_t &msg) {}
+    static void on_actuator_commands_peek(const OVTopics::ActuatorCommands_msg_t &msg) {}
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::SensorStatus_t> sensor_status_pub;
-    OVTopics::SensorStatus_t SensorMsg;
+    OVQueuePublisher<OVTopics::SensorStatus_msg_t> sensor_status_pub;
+    OVTopics::SensorStatus_msg_t SensorMsg;
     /* Subs */
-    OVQueueSubscriber<OVTopics::ActuatorCommands_t> actuator_cmd_sub;
+    OVQueueSubscriber<OVTopics::ActuatorCommands_msg_t> actuator_cmd_sub;
 };
 
 void start_emulator_manager() {

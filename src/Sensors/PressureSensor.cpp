@@ -8,10 +8,10 @@ void PressureSensor::spinSampler(uint32_t dt){
      * pressure reading
      *  */
 
-    auto adc_v_read = getSample() * parameters.sensitivity;
+    auto adc_v_read = getSample() * parameters.sensitivity - parameters.offset;
     
     /* Filter */
-    pressure_data.voltage = 0; // Filtered
+    pressure_data.voltage = adc_v_read; // TODO: Filter
 
     /* Convert */
     pressure_data.P_mmH2O = pressure_data.voltage * parameters.v_to_mmH2O;

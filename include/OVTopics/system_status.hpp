@@ -5,8 +5,31 @@
 namespace OVTopics {
 
 typedef struct {
-    int a;
-} SystemStatus_t;
+
+    struct {
+        float exp;
+        float average;
+        float max;
+        float min;
+    }P;
+
+    struct {
+        float slpm;
+
+    }Q;
+
+    struct {
+        float max;
+        float min;
+        float average;
+    }V;
+
+    struct{
+        uint32_t uptime;
+
+    }system;
+    
+} SystemStatus_msg_t;
 
 }  // namespace OVTopics
 

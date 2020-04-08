@@ -5,8 +5,11 @@
 namespace OVTopics {
 
 typedef struct {
-    int p;
-} SensorStatus_t;
+    float Q_SLPM;
+    float R_Hz;
+    float IE_Ratio;
+} SensorStatus_msg_t;
+
 
 }  // namespace OVTopics
 

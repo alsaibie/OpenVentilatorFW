@@ -42,7 +42,7 @@ class LinearAxis {
     : config(cfg), motor(mot){
         axis_name = name;
     }
-
+    
     /* Periodic Motor Control Call */
     void spinAxis(uint32_t dt);
 
@@ -54,6 +54,7 @@ class LinearAxis {
     /* Torque Control Mode Cmd*/
     inline void setTorque(int32_t &tau){torque = tau;}
     /* Position Trajectory Mode Cmd*/
+    
     //TODO: resolve update ongoing trajectory: or wait until complete? 
     inline void updatePosTrajectory(AxisTrajectory_t &ptraj){posTraj = ptraj;}
   

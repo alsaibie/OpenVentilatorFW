@@ -2,7 +2,7 @@
 #include "OVRTOS/OVRTOS.hpp"
 
 /* Include Topics */
-#include "OVTopics/operation_modes.hpp"
+#include "OVTopics/operation_status.hpp"
 #include "OVTopics/safety.hpp"
 #include "OVTopics/sensor_status.hpp"
 #include "OVTopics/actuator_commands.hpp"
@@ -12,7 +12,7 @@
 std::vector<OVRTOS::OVQueueHandle_t *> OVRTOS::OVQueueBase::ptrOVQH;
 
 /* Instantiate OVQHandles */
-OVRTOS::OVQueueHandle_t gOperationModesOVQHandle{NULL, "Operation Modes", 1};
+OVRTOS::OVQueueHandle_t gOperationStatusOVQHandle{NULL, "Operation Status", 1};
 OVRTOS::OVQueueHandle_t gSafetyOVQHandle{NULL, "Safety", 1};
 OVRTOS::OVQueueHandle_t gSensorStatusOVQHandle{NULL, "Sensor Readings", 10};
 OVRTOS::OVQueueHandle_t gActuatorCommandsOVQHandle{NULL, "Actuator Commands", 10};
@@ -31,6 +31,7 @@ void StartOpenVentilator() {
     start_ui_manager();
     start_actuator_manager();
     start_emulator_manager();
+    start_system_monitor();
 
     vTaskStartScheduler();
 }

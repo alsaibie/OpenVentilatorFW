@@ -1,5 +1,5 @@
-#ifndef OPERATION_MODES_HPP_
-#define OPERATION_MODES_HPP_
+#ifndef OPERATION_STATUS_HPP_
+#define OPERATION_STATUS_HPP_
 #include "OVRTOS/OVQueue.hpp"
 
 namespace OVTopics {
@@ -11,14 +11,14 @@ BreathAssist,
 
 NumOfOpModes
 
-}OperationModes;
+}Operation_modes_t;
 
 typedef struct {
     int a;
-} OperationModes_t;
+} OperationStatus_msg_t;
 
 }  // namespace OVTopics
 
-extern OVRTOS::OVQueueHandle_t gOperationModesOVQHandle;
+extern OVRTOS::OVQueueHandle_t gOperationStatusOVQHandle;
 
 #endif

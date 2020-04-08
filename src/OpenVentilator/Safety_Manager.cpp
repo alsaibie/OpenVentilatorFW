@@ -1,7 +1,7 @@
 #include "OpenVentilator/OpenVentilator.hpp"
 
 /* OVTopics */
-#include "OVTopics/operation_modes.hpp"
+#include "OVTopics/operation_status.hpp"
 #include "OVTopics/safety.hpp"
 #include "OVTopics/sensor_status.hpp"
 #include "OVTopics/user_input.hpp"
@@ -15,7 +15,7 @@ class SafetyManager : public OVThread {
           safety_pub(gSafetyOVQHandle),
           user_input_sub(gUserInputOVQHandle, &on_user_input_receive, Receive),
           sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
-          operation_modes_sub(gOperationModesOVQHandle, &on_operation_modes_peek, Peek) {}
+          operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek) {}
 
    protected:
     virtual void run() {
@@ -31,33 +31,33 @@ class SafetyManager : public OVThread {
         while (1) {
             user_input_sub.receive();
             sensor_status_sub.receive();
-            operation_modes_sub.receive();
+            operation_status_sub.receive();
 
-            SafetyMsg.a = 1;
-            safety_pub.publish(SafetyMsg);
+            safety_msg.error = OVTopics::FLOW_SENSOR_ERROR;
+            safety_pub.publish(safety_msg);
 
             thread_lap();
         }
     }
 
    private:
-    static void on_sensor_status_peek(const OVTopics::SensorStatus_t &msg) {}
+    static void on_sensor_status_peek(const OVTopics::SensorStatus_msg_t &msg) {}
 
-    static void on_user_input_receive(const OVTopics::UserInput_t &msg) {}
+    static void on_user_input_receive(const OVTopics::UserInput_msg_t &msg) {}
 
-    static void on_operation_modes_peek(const OVTopics::OperationModes_t &msg) {
+    static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {
         if (msg.a == 2) {
-            Serial.println("Op Mode Message Received");
+            Serial.println("Op Status Message Received");
         }
     }
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::Safety_t> safety_pub;
-    OVTopics::Safety_t SafetyMsg;
+    OVQueuePublisher<OVTopics::Safety_msg_t> safety_pub;
+    OVTopics::Safety_msg_t safety_msg;
     /* Subs */
-    OVQueueSubscriber<OVTopics::UserInput_t> user_input_sub;
-    OVQueueSubscriber<OVTopics::SensorStatus_t> sensor_status_sub;
-    OVQueueSubscriber<OVTopics::OperationModes_t> operation_modes_sub;
+    OVQueueSubscriber<OVTopics::UserInput_msg_t> user_input_sub;
+    OVQueueSubscriber<OVTopics::SensorStatus_msg_t> sensor_status_sub;
+    OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
 };
 
 void start_safety_manager(void) {

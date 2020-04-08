@@ -2,7 +2,7 @@
 
 /* Include Topics */
 #include "OVTopics/actuator_commands.hpp"
-#include "OVTopics/operation_modes.hpp"
+#include "OVTopics/operation_status.hpp"
 #include "OVTopics/safety.hpp"
 #include "OVTopics/sensor_status.hpp"
 #include "OVTopics/system_status.hpp"
@@ -16,7 +16,7 @@ class MasterManager : public OVThread {
     MasterManager()
         : OVThread("Master Manager", 128, master_m_priority, 50),
           system_status_pub(gSensorStatusOVQHandle),
-          operation_modes_pub(gOperationModesOVQHandle),
+          operation_status_pub(gOperationStatusOVQHandle),
           safety_sub(gSafetyOVQHandle, &on_safety_receive, Receive),
           user_input_sub(gUserInputOVQHandle, &on_user_input_receive, Receive),
           sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek) {}
@@ -29,8 +29,8 @@ class MasterManager : public OVThread {
             sensor_status_sub.receive();
             digitalToggle(LED_BUILTIN);
 
-            OpModeMsg.a = 2;
-            operation_modes_pub.publish(OpModeMsg);
+            OpStatusMsg.a = 2;
+            operation_status_pub.publish(OpStatusMsg);
 
             thread_lap();
         }
@@ -39,36 +39,43 @@ class MasterManager : public OVThread {
    private:
     void update_system_state() {}
 
-    void run_state_machine() {}
+    void run_state_machine() {
 
-    static void on_user_input_receive(const OVTopics::UserInput_t &msg) {
-        if (msg.sw == 3){
-            Serial.println("User Input Msg Received");
-        }
+
     }
 
-    static void on_safety_receive(const OVTopics::Safety_t &msg) {
-        if (msg.a == 1) {
+    static void on_user_input_receive(const OVTopics::UserInput_msg_t &msg) {
+            Serial.print("Flow Rate: ");
+            Serial.print(msg.flow_sp_lpm);
+            Serial.print(" Rate: ");
+            Serial.print(msg.rate_sp_hz);
+            Serial.print(" IE Ratio: ");
+            Serial.print(msg.IE_ratio);
+            Serial.println("");
+    }
+
+    static void on_safety_receive(const OVTopics::Safety_msg_t &msg) {
+        if (msg.error == 1) {
             Serial.println("Safety Message Received");
         }
     }
 
-    static void on_sensor_status_peek(const OVTopics::SensorStatus_t &msg) {
-        if(msg.p == 4){
+    static void on_sensor_status_peek(const OVTopics::SensorStatus_msg_t &msg) {
+        if(msg.R_Hz == 4){
             Serial.println("Sensor Status Msg Received");
         }
     }
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::SystemStatus_t> system_status_pub;
-    OVTopics::SystemStatus_t SysStatusMsg;
-    OVQueuePublisher<OVTopics::OperationModes_t> operation_modes_pub;
-    OVTopics::OperationModes_t OpModeMsg;
+    OVQueuePublisher<OVTopics::SystemStatus_msg_t> system_status_pub;
+    OVTopics::SystemStatus_msg_t SysStatusMsg;
+    OVQueuePublisher<OVTopics::OperationStatus_msg_t> operation_status_pub;
+    OVTopics::OperationStatus_msg_t OpStatusMsg;
 
     /* Subs */
-    OVQueueSubscriber<OVTopics::Safety_t> safety_sub;
-    OVQueueSubscriber<OVTopics::UserInput_t> user_input_sub;
-    OVQueueSubscriber<OVTopics::SensorStatus_t> sensor_status_sub;
+    OVQueueSubscriber<OVTopics::Safety_msg_t> safety_sub;
+    OVQueueSubscriber<OVTopics::UserInput_msg_t> user_input_sub;
+    OVQueueSubscriber<OVTopics::SensorStatus_msg_t> sensor_status_sub;
 };
 
 void start_master_manager() {

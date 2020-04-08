@@ -16,7 +16,7 @@ class Stepper {
    public:
     Stepper(const char *name, StepperPinConfig_t &p_cfg)
         : pin_config(p_cfg), direction(Forward), last_micros(0), step_time_period(1), number_of_steps(4), step_num(0) {
-        for (int k; k < pin_config.pin_count; k++) {
+        for (uint32_t k; k < pin_config.pin_count; k++) {
             pinMode(pin_config.pin_set[k], OUTPUT);
         }
         pinMode(pin_config.enable_pin, OUTPUT);
@@ -50,7 +50,7 @@ class Stepper {
     inline void doSteps(uint32_t current_step) { /* Apply step sequence */
         static const uint32_t sequence_set[4]{0b1010, 0b0110, 0b0101, 0b1001};
         uint32_t sequence = sequence_set[current_step];
-        for (int k = 0; k < pin_config.pin_count; k++) {
+        for (uint32_t k = 0; k < pin_config.pin_count; k++) {
             pinMode(pin_config.pin_set[k], sequence & (0x1 << k));
         }
     }

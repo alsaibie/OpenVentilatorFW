@@ -7,18 +7,18 @@
 #include "board_configuration.hpp"
 namespace Sensors {
 typedef struct  {
-    float sensitivity; /* [mV]/bit*/
+    float sensitivity;     /* [mV]/bit*/
     float offset;
-    float v_to_mmH2O; /* [mmH2O] / [mV]*/
+    float v_to_mmH2O;      /* [mmH2O] / [mV]*/
     /* Assuming a calibrated spirometer */
     float d_mmH2O_to_SLPM; /* [SLPM]/[mmH2O] */ 
     float cut_off_f;
 }FlowSensorParameters_t;
 
 typedef struct  {
-    float voltage; /* Sensor Filtered Voltage Reading */
+    float voltage;  /* Sensor Filtered Voltage Reading */
     float dP_mmH2O; /* Differential Pressure [mmH2O] */
-    float Q_SLPM; /* Flow Rate [Standard Liter per Minute]*/
+    float Q_SLPM;   /* Flow Rate [Standard Liter per Minute]*/
 }FlowSensorData_t;
 
 class FlowSensor : AnalogInterface {
@@ -28,7 +28,7 @@ class FlowSensor : AnalogInterface {
 
     inline void setParameters(FlowSensorParameters_t &param) { parameters = param; }
 
-    inline FlowSensorData_t getReading(void){ return flow_data};
+    inline FlowSensorData_t getReading(void){ return flow_data;};
 
     virtual void spinSampler(uint32_t dt);
 
