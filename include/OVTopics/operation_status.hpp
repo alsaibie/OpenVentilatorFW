@@ -4,17 +4,18 @@
 
 namespace OVTopics {
 
-typedef enum{
-PressureControl = 0, 
-VolumeControl, 
-BreathAssist,
+enum class OperationState_Modes{
+DISARMED = 0, 
+READY, 
+RUNNING,
+RUNNING_W_WARNING,
 
-NumOfOpModes
+NUM_OPERATION_STATES
 
-}Operation_modes_t;
+};
 
 typedef struct {
-    int a;
+    OperationState_Modes operation_state;
 } OperationStatus_msg_t;
 
 }  // namespace OVTopics

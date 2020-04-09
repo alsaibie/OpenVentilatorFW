@@ -10,7 +10,8 @@ typedef struct {
         uint32_t position;
         uint32_t speed;
         uint32_t torque;
-        Actuators::Actuator_modes_t mode;
+        Actuators::AxisTrajectory_t trajectory;
+        Actuators::Actuator_Modes mode;
     } primaryAxis, secondaryAxis;
 
 } ActuatorCommands_msg_t;

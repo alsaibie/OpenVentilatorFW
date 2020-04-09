@@ -2,7 +2,7 @@
 #define LINEARAXIS_HPP_
 
 #include "Stepper.hpp"
-#include "common_types.hpp"
+#include "OVTopics/common_types.hpp"
 namespace Actuators{
 typedef struct {
     uint32_t gear_ratio;      /* [RPS to mm/s] */
@@ -29,7 +29,7 @@ class LinearAxis {
     /* Periodic Motor Control Call */
     void spinAxis(uint32_t dt);
 
-    inline void setMode(Actuator_modes_t &m){ control_mode = m;}
+    inline void setMode(Actuator_Modes &m){ control_mode = m;}
     /* Position Control Mode Cmd*/
     inline void setPosition(int32_t &p){position = p;}
     /* Speed Control Mode Cmd */
@@ -42,7 +42,7 @@ class LinearAxis {
     inline void updatePosTrajectory(AxisTrajectory_t &ptraj){posTraj = ptraj;}
   
     private:
-    Actuator_modes_t control_mode;
+    Actuator_Modes control_mode;
     LinearAxis_config_t config;
     int32_t position, velocity, torque;
     AxisTrajectory_t posTraj, velTraj, torqTraj;

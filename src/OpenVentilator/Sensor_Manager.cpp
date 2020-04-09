@@ -7,6 +7,7 @@
 #include "OVTopics/safety.hpp"
 
 using namespace OVRTOS;
+using namespace OVTopics;
 
 class SensorManager : public OVThread {
    public:
@@ -23,15 +24,15 @@ class SensorManager : public OVThread {
     }
 
    private:
-    static void on_safety_peek(const OVTopics::Safety_msg_t &msg) {
+    static void on_safety_peek(const Safety_msg_t &msg) {
         /* Future placement */
     }
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::SensorStatus_msg_t> sensor_status_pub;
-    OVTopics::SensorStatus_msg_t SensorMsg;
+    OVQueuePublisher<SensorStatus_msg_t> sensor_status_pub;
+    SensorStatus_msg_t SensorMsg;
     /* Subs */
-    OVQueueSubscriber<OVTopics::Safety_msg_t> safety_sub;
+    OVQueueSubscriber<Safety_msg_t> safety_sub;
 };
 
 void start_sensor_manager() {

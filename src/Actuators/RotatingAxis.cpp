@@ -2,7 +2,7 @@
 
 using namespace Actuators;
 
-void RotatingAxis::spinAxis(uint32_t dt){
+void RotatingAxis::spinAxis(uint32_t dt_us){
 
 
 }

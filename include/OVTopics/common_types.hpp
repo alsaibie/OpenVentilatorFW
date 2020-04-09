@@ -12,7 +12,7 @@ typedef struct {
     bool cyclical; /* If cyclical: must be a closed path -> end = start */
 } AxisTrajectory_t;
 
-typedef enum {
+ enum class Actuator_Modes {
     Position = 0,
     Velocity,
     Torque,
@@ -21,7 +21,7 @@ typedef enum {
     TorqueTrajectory,
 
     Num_of_Modes
-} Actuator_modes_t;
+};
 
 }  // namespace Actuators
 

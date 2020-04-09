@@ -8,7 +8,7 @@
 #include "OVTopics/sensor_status.hpp"
 
 using namespace OVRTOS;
-
+using namespace OVTopics;
 class ControllerManager : public OVThread {
    public:
     ControllerManager()
@@ -38,15 +38,15 @@ class ControllerManager : public OVThread {
     }
 
    private:
-    static void on_sensor_status_peek(const OVTopics::SensorStatus_msg_t &msg) {}
-    static void on_operation_modes_peek(const OVTopics::OperationStatus_msg_t &msg) {}
+    static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {}
+    static void on_operation_modes_peek(const OperationStatus_msg_t &msg) {}
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::ActuatorCommands_msg_t> actuator_cmd_pub;
+    OVQueuePublisher<ActuatorCommands_msg_t> actuator_cmd_pub;
 
     /* Subs */
-    OVQueueSubscriber<OVTopics::SensorStatus_msg_t> sensor_status_sub;
-    OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
+    OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
+    OVQueueSubscriber<OperationStatus_msg_t> operation_status_sub;
 };
 
 void start_controller_manager() {

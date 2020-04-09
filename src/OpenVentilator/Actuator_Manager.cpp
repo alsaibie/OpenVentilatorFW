@@ -8,6 +8,7 @@
 #include "OVTopics/actuator_commands.hpp"
 
 using namespace OVRTOS;
+using namespace OVTopics;
 using namespace Actuators;
 
 #define prAxisGearRatio 3
@@ -24,20 +25,21 @@ class ActuatorManager : public OVThread {
         : OVThread("Actuator Manager ", 128, actuator_m_priority, 20),
           actuator_cmd_sub(gActuatorCommandsOVQHandle, &on_actuator_cmd_receive, Receive) {}
 
-    static Actuators::RotatingAxis *primaryAxis;
+    static RotatingAxis *primaryAxis;
 
    protected:
     virtual void run() {
-        time_t last_millis = millis();
+        time_t last_micros = micros();
         while (1) {
             /*
-             * Upon receiving the command, and based on the operating mode the
-             * the commands will be relayed to the actuator.
-             *
+             * Upon receiving the command from the controller. Any actuator mode changes
+             * will be done, and the corresponding setpoint for each will be set.
+             * The spinAxis call is a synchronous call to command the motors directly
              * */
 
-            primaryAxis->spinAxis(millis() - last_millis);
-            last_millis = millis();
+            primaryAxis->spinAxis(micros() - last_micros);
+
+            last_micros = micros();
 
             actuator_cmd_sub.receive();
 
@@ -46,46 +48,45 @@ class ActuatorManager : public OVThread {
     }
 
    private:
-    void test() {}
     static void on_actuator_cmd_receive(const OVTopics::ActuatorCommands_msg_t &msg) {
-        static Actuators::Actuator_modes_t mode = Actuators::Velocity;
+        static Actuator_Modes mode = Actuator_Modes::Velocity;
 
         // TODO: Include other modes
-        Actuators::Actuator_modes_t new_mode = msg.primaryAxis.mode;
+        Actuator_Modes new_mode = msg.primaryAxis.mode;
         if (new_mode != mode) {
             primaryAxis->setMode(new_mode);
             mode = new_mode;
         }
 
-        if (mode == Actuators::Position) {
+        if (mode == Actuator_Modes::Position) {
             primaryAxis->setVelocity(msg.primaryAxis.position);
-        } else if (mode == Actuators::Velocity) {
+        } else if (mode == Actuator_Modes::Velocity) {
             primaryAxis->setVelocity(msg.primaryAxis.speed);
-        } else if (mode == Actuators::Torque) {
+        } else if (mode == Actuator_Modes::Torque) {
             primaryAxis->setTorque(msg.primaryAxis.torque);
+        } else if (mode == Actuator_Modes::PositionTrajectory || mode == Actuator_Modes::VelocityTrajectory ||
+                   mode == Actuator_Modes::TorqueTrajectory) {
+          primaryAxis->updateTrajectory(msg.primaryAxis.trajectory);
         }
     }
     /* Pubs */
 
     /* Subs */
     OVQueueSubscriber<OVTopics::ActuatorCommands_msg_t> actuator_cmd_sub;
-
 };
 
 RotatingAxis *ActuatorManager::primaryAxis;
 
 void start_actuator_manager() {
-
     /* Configure Primary Actuator */
-    Actuators::StepperPinConfig_t stp_config{MOTOR_LEFT_ENABLE_PIN, MOTOR_LEFT_DIR_PIN, MOTOR_LEFT_STEP_PIN};
+    StepperPinConfig_t stp_config{MOTOR_LEFT_ENABLE_PIN, MOTOR_LEFT_DIR_PIN, MOTOR_LEFT_STEP_PIN};
 
-    Actuators::Stepper primaryStepper("Primary Stepper", stp_config);
-    Actuators::RotatingAxis_config_t rotax_cfg({prAxisGearRatio, prAxisMotionRange, open_limit_pos, prAxisMaxPos,
+    Stepper primaryStepper("Primary Stepper", stp_config);
+    RotatingAxis_config_t rotax_cfg({prAxisGearRatio, prAxisMotionRange, open_limit_pos, prAxisMaxPos,
                                                 prAxisMinPos, prAxisMaxVel, prAxisMaxAcc, prAxisMinAcc});
     ActuatorManager::primaryAxis = new RotatingAxis("Primary Axis", rotax_cfg, primaryStepper);
 
-
     ActuatorManager *ptr = new ActuatorManager();
-    
+
     ptr->start();
 }

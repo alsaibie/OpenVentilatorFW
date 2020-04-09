@@ -13,6 +13,9 @@ using namespace UI;
 using namespace OVRTOS;
 using namespace OVTopics;
 
+
+#define DEFAULT_USER_MODE UserSystem_Modes::MANUAL_MODE
+
 // TODO: Map button functions for each operation mode and display interface:
 class UIManager : public OVThread {
    public:
@@ -30,7 +33,7 @@ class UIManager : public OVThread {
           user_input_pub(gUserInputOVQHandle),
           system_status_sub(gSystemStatusOVQHandle, &on_system_status_peek, Peek),
           operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek),
-          user_system_modes(MANUAL_MODE) {
+          user_system_modes(UserSystem_Modes::MANUAL_MODE) {
         params.ie_min = 0.5;
         params.ie_max = 3.0;
         params.flow_rate_lpm_max = 60;
@@ -105,7 +108,7 @@ class UIManager : public OVThread {
 
     static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {}
 
-    OVTopics::UserSystem_modes_t user_system_modes;
+    UserSystem_Modes user_system_modes;
 
     Button btn1, btn2, btn3, btn4, btn5;
     Potentionmeter pot1, pot2, pot3, pot4;

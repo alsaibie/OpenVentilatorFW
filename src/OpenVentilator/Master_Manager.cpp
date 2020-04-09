@@ -8,8 +8,13 @@
 #include "OVTopics/system_status.hpp"
 #include "OVTopics/user_input.hpp"
 
+
 /* Master Manager */
 using namespace OVRTOS;
+using namespace OVTopics;
+
+/* Default Modes */
+#define DEFAULT_OPERATION_STATE OperationState_Modes::DISARMED
 
 class MasterManager : public OVThread {
    public:
@@ -19,7 +24,9 @@ class MasterManager : public OVThread {
           operation_status_pub(gOperationStatusOVQHandle),
           safety_sub(gSafetyOVQHandle, &on_safety_receive, Receive),
           user_input_sub(gUserInputOVQHandle, &on_user_input_receive, Receive),
-          sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek) {}
+          sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
+          operation_state(DEFAULT_OPERATION_STATE)
+           {}
 
    protected:
     virtual void run() {
@@ -27,9 +34,11 @@ class MasterManager : public OVThread {
             safety_sub.receive();
             user_input_sub.receive();
             sensor_status_sub.receive();
+            
             digitalToggle(LED_BUILTIN);
 
-            OpStatusMsg.a = 2;
+            OpStatusMsg.operation_state = operation_state;
+
             operation_status_pub.publish(OpStatusMsg);
 
             thread_lap();
@@ -54,28 +63,30 @@ class MasterManager : public OVThread {
             Serial.println("");
     }
 
-    static void on_safety_receive(const OVTopics::Safety_msg_t &msg) {
-        if (msg.error == 1) {
+    static void on_safety_receive(const Safety_msg_t &msg) {
+        if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
             Serial.println("Safety Message Received");
         }
     }
 
-    static void on_sensor_status_peek(const OVTopics::SensorStatus_msg_t &msg) {
+    static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
         if(msg.R_Hz == 4){
             Serial.println("Sensor Status Msg Received");
         }
     }
 
     /* Pubs */
-    OVQueuePublisher<OVTopics::SystemStatus_msg_t> system_status_pub;
-    OVTopics::SystemStatus_msg_t SysStatusMsg;
-    OVQueuePublisher<OVTopics::OperationStatus_msg_t> operation_status_pub;
-    OVTopics::OperationStatus_msg_t OpStatusMsg;
+    OVQueuePublisher<SystemStatus_msg_t> system_status_pub;
+    SystemStatus_msg_t SysStatusMsg;
+    OVQueuePublisher<OperationStatus_msg_t> operation_status_pub;
+    OperationStatus_msg_t OpStatusMsg;
 
     /* Subs */
-    OVQueueSubscriber<OVTopics::Safety_msg_t> safety_sub;
-    OVQueueSubscriber<OVTopics::UserInput_msg_t> user_input_sub;
-    OVQueueSubscriber<OVTopics::SensorStatus_msg_t> sensor_status_sub;
+    OVQueueSubscriber<Safety_msg_t> safety_sub;
+    OVQueueSubscriber<UserInput_msg_t> user_input_sub;
+    OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
+
+    OperationState_Modes operation_state;
 };
 
 void start_master_manager() {
