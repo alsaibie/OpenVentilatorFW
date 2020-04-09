@@ -16,6 +16,12 @@ class EmulatorManager : public OVThread {
    protected:
     virtual void run() {
         while (1) {
+            /* 
+             * The emulator is the digital twin of the ventilator device
+             * It will run whether in SITL or Op Mode.
+             * It is the controller's job to choose whether to use the emulator ouput
+             * or actual sensors output. The emulator should mimick only what the sensors can give
+             * */
             
             thread_lap();
         }

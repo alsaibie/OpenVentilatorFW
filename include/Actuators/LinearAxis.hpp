@@ -2,6 +2,7 @@
 #define LINEARAXIS_HPP_
 
 #include "Stepper.hpp"
+#include "common_types.hpp"
 namespace Actuators{
 typedef struct {
     uint32_t gear_ratio;      /* [RPS to mm/s] */
@@ -13,32 +14,14 @@ typedef struct {
     int32_t max_acc_fwd; /* [mm/s^2] */
     int32_t max_acc_rev; /* [mm/s^2] */
 
-} LinearAxisConfig_t;
+} LinearAxis_config_t;
 
-/* Generic Motion Trajectory */
-typedef struct{
-    uint8_t * traj_arr;
-    uint32_t traj_arr_length;
-    uint32_t sample_time;
-    bool cyclical; /* If cyclical: must be a closed path -> end = start */
-}AxisTrajectory_t;
-
-typedef enum{
-    Position = 0, 
-    Velocity, 
-    Torque,
-    PositionTrajectory, 
-    VelocityTrajectory, 
-    TorqueTrajectory,
-    
-    Num_of_Modes
-}LinearAxisControlModes_t;
 
 typedef MotorDirection_t AxisDirection_t;
 
 class LinearAxis {
     public:
-    LinearAxis(const char *name, LinearAxisConfig_t &cfg, Stepper &mot)
+    LinearAxis(const char *name, LinearAxis_config_t &cfg, Stepper &mot)
     : config(cfg), motor(mot){
         axis_name = name;
     }
@@ -46,7 +29,7 @@ class LinearAxis {
     /* Periodic Motor Control Call */
     void spinAxis(uint32_t dt);
 
-    inline void setMode(LinearAxisControlModes_t &m){ control_mode = m;}
+    inline void setMode(Actuator_modes_t &m){ control_mode = m;}
     /* Position Control Mode Cmd*/
     inline void setPosition(int32_t &p){position = p;}
     /* Speed Control Mode Cmd */
@@ -59,8 +42,8 @@ class LinearAxis {
     inline void updatePosTrajectory(AxisTrajectory_t &ptraj){posTraj = ptraj;}
   
     private:
-    LinearAxisControlModes_t control_mode;
-    LinearAxisConfig_t config;
+    Actuator_modes_t control_mode;
+    LinearAxis_config_t config;
     int32_t position, velocity, torque;
     AxisTrajectory_t posTraj, velTraj, torqTraj;
     const char * axis_name;
