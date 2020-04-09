@@ -15,7 +15,8 @@ typedef enum { Reverse = 0, Forward } MotorDirection_t;
 class Stepper {
    public:
     Stepper(const char *name, StepperPinConfig_t &p_cfg)
-        : pin_config(p_cfg), direction(Forward), last_micros(0), step_time_period(1), number_of_steps(4), step_num(0) {
+        : pin_config(p_cfg), direction(Forward), last_micros(0), step_time_period(1), number_of_steps(4), step_num(0),
+        position_est(0), velocity_est(0), acceleration_est(0) {
         pinMode(pin_config.dir_pin, OUTPUT);
         pinMode(pin_config.step_pin, OUTPUT);
         pinMode(pin_config.enable_pin, OUTPUT);
@@ -26,6 +27,10 @@ class Stepper {
 
     inline void enableMotor() { digitalWrite(pin_config.enable_pin, HIGH); }
     inline void disableMotor() { digitalWrite(pin_config.enable_pin, LOW); }
+
+    inline int32_t getEstPosition(){}
+    inline int32_t getEstVelocity(){}
+    inline int32_t getEstAcceleration(){}
 
     inline void stepMotor(int32_t steps) {
         uint32_t steps_remaining = abs(steps);
@@ -44,7 +49,8 @@ class Stepper {
             }
         }
     }
-
+    inline int32_t get_absolute_step(){}
+    inline void zero_absolute_step(){ absolute_step_postion = 0;}
    private:
     inline void doSteps(uint32_t current_step) { /* Apply step sequence */
         static const uint32_t sequence_set[4]{0b1010, 0b0110, 0b0101, 0b1001};
@@ -58,6 +64,8 @@ class Stepper {
     time_t step_time_period;
     uint32_t number_of_steps;
     uint32_t step_num;
+    int32_t absolute_step_postion;
+    int32_t position_est, velocity_est, acceleration_est;
 };
 }  // namespace Actuators
 #endif

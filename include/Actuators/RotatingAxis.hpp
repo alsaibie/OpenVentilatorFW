@@ -22,21 +22,29 @@ typedef MotorDirection_t AxisDirection_t;
 
 class RotatingAxis {
    public:
-    RotatingAxis(const char *name, RotatingAxis_config_t &cfg, Stepper &mot) : config(cfg), motor(mot) {
+    RotatingAxis(const char *name, RotatingAxis_config_t &cfg, Stepper &mot) : config(cfg), motor(mot), currently_homing(false), home_reached(false) {
         axis_name = name;
     }
 
     /* Periodic Motor Control Call */
     void spinAxis(uint32_t dt_us);
 
+    int32_t stepsFromPosition(int32_t &pos, uint32_t dt_us);
+    int32_t stepsFromVelocity(int32_t &vel, uint32_t dt_us);
+    int32_t stepsFromTorque(int32_t &tau, uint32_t dt_us);
+
+    inline void homeAxis(){currently_homing = true;};
+
     /* Set Actuator Control Mode */
+
     inline void setMode(const Actuator_Modes &m) { control_mode = m; }
     
-    inline void setPosition(const int32_t &p) { position = p; }
+    inline void setPosition(const int32_t &p) { position_sp = p; }
     
-    inline void setVelocity(const int32_t &v) { velocity = v; }
+    inline void setVelocity(const int32_t &v) { velocity_sp = v; }
     
-    inline void setTorque(const int32_t &tau) { torque = tau; }
+    inline void setTorque(const int32_t &tau) { torque_sp = tau; }
+
 
     /* Note: the spinAxis method will hold and execute a copy of the trajectory and
      * determine when to use the updated traj
@@ -46,9 +54,12 @@ class RotatingAxis {
    private:
     Actuator_Modes control_mode;
     RotatingAxis_config_t config;
-    int32_t position, velocity, torque;
+    int32_t position_sp, velocity_sp, torque_sp;
+    int32_t position_est, velocity_est, acceleration_est;
     AxisTrajectory_t Traj;
     const char *axis_name;
+    bool currently_homing;
+    bool home_reached;
 
     Stepper &motor;
 };
