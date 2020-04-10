@@ -54,24 +54,24 @@ class MasterManager : public OVThread {
     }
 
     static void on_user_input_receive(const OVTopics::UserInput_msg_t &msg) {
-            Serial.print("Flow Rate: ");
-            Serial.print(msg.flow_sp_lpm);
-            Serial.print(" Rate: ");
-            Serial.print(msg.rate_sp_hz);
-            Serial.print(" IE Ratio: ");
-            Serial.print(msg.IE_ratio);
-            Serial.println("");
+            // Serial.print("Flow Rate: ");
+            // Serial.print(msg.flow_sp_lpm);
+            // Serial.print(" Rate: ");
+            // Serial.print(msg.rate_sp_hz);
+            // Serial.print(" IE Ratio: ");
+            // Serial.print(msg.IE_ratio);
+            // Serial.println("");
     }
 
     static void on_safety_receive(const Safety_msg_t &msg) {
         if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
-            Serial.println("Safety Message Received");
+            // Serial.println("Safety Message Received");
         }
     }
 
     static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
         if(msg.R_Hz == 4){
-            Serial.println("Sensor Status Msg Received");
+            // Serial.println("Sensor Status Msg Received");
         }
     }
 

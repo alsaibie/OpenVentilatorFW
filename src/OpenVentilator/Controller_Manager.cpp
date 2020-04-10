@@ -3,9 +3,9 @@
 /* Publish Topics */
 #include "OVTopics/actuator_commands.hpp"
 /* Subscribe Topics */
-#include "OVTopics/user_input.hpp"
 #include "OVTopics/operation_status.hpp"
 #include "OVTopics/sensor_status.hpp"
+#include "OVTopics/user_input.hpp"
 
 using namespace OVRTOS;
 using namespace OVTopics;
@@ -21,18 +21,17 @@ class ControllerManager : public OVThread {
     virtual void run() {
         while (1) {
             /*
-            * From sensor data and based on mode, compute actuator cmd 
-            */
+             * From sensor data and based on mode, compute actuator cmd
+             */
 
-           /* Mode 1: Pressure Control */
-
+            /* Mode 1: Pressure Control */
 
             /* Mode 2: Pressure Control - Breath Assist */
 
             /* Mode 3: Volume Control */
 
             /* Mode 4: ... */
-            
+
             thread_lap();
         }
     }

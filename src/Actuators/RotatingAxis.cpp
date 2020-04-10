@@ -8,9 +8,9 @@ void RotatingAxis::spinAxis(uint32_t dt_us) {
 
     if (!currently_homing) {
         /* Get Estimated Position, Velocity and Acceleration of Axis */
-        position_est = motor.getEstPosition() * config.gear_ratio;
-        velocity_est = motor.getEstVelocity() * config.gear_ratio;
-        acceleration_est = motor.getEstAcceleration() * config.gear_ratio;
+        this->position_est = motor.getEstPosition() * config.gear_ratio;
+        this->velocity_est = motor.getEstVelocity() * config.gear_ratio;
+        this->acceleration_est = motor.getEstAcceleration() * config.gear_ratio;
 
         /* Direct Command Modes */
         if (control_mode == Actuator_Modes::Position) {
@@ -56,26 +56,34 @@ void RotatingAxis::spinAxis(uint32_t dt_us) {
                 trajector_index = 0;
             }
         }
-    } else if (currently_homing) {
+    } else if (this->currently_homing) {
         /* Step a little */
         steps_todo = -5;  // TODO: or plus?
         /* If home reached, zero stepper position */
-        if (home_reached) {
+        if (this->home_reached) {
             motor.zero_absolute_step();
-            home_reached = false;
-            currently_homing = false;
+            this->home_reached = false;
+            this->currently_homing = false;
         }
     }
 
     /* Execute Step and Estimate Position */
-    motor.stepMotor(steps_todo);
+    this->motor.stepMotor(steps_todo);
 }
 
-int32_t RotatingAxis::stepsFromPosition(int32_t &pos, uint32_t dt_us) {
-    // Map axis pos to actuator pos
-    // Then apply max pos, max vel, and max acc
+int32_t RotatingAxis::stepsFromPosition(int32_t x_sp, uint32_t dt_us) {
+
+    int32_t x_est = this->position_est;
+    /* Saturate Position */
+    if(x_sp >= config.max_pos){x_sp = config.max_pos;}
+    if(x_sp <= config.min_pos){x_sp = config.min_pos;}
+    
+    int32_t delta_x = x_sp - x_est;
+    int32_t delta_steps = delta_x * config.gear_ratio;
+
+    return delta_steps;
 }
 
-int32_t RotatingAxis::stepsFromVelocity(int32_t &vel, uint32_t dt_us) {}
+int32_t RotatingAxis::stepsFromVelocity(int32_t x_sp, uint32_t dt_us) {}
 
-int32_t RotatingAxis::stepsFromTorque(int32_t &tau, uint32_t dt_us) {}
+int32_t RotatingAxis::stepsFromTorque(int32_t x_sp, uint32_t dt_us) {}

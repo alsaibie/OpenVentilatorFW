@@ -33,5 +33,8 @@ const RTOSPriority_T emulator_m_priority = rtosPriorityIdle;
 void start_system_monitor(void);
 const RTOSPriority_T system_mon_priority = rtosPriorityHigh;
 
+void start_pc_comms_manager(void);
+const RTOSPriority_T pc_comms_m_priority = rtosPriorityIdle;
+
 
 #endif /* MASTER_MANAGER_HPP_ */

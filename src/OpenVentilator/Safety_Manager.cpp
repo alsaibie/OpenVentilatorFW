@@ -49,7 +49,7 @@ class SafetyManager : public OVThread {
 
     static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {
         if (msg.operation_state == OperationState_Modes::DISARMED) {
-            Serial.println("System Disarmed");
+            // Serial.println("System Disarmed");
         }
     }
 

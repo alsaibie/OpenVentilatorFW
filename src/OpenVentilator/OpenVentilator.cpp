@@ -18,6 +18,7 @@ OVRTOS::OVQueueHandle_t gSensorStatusOVQHandle{NULL, "Sensor Readings", 10};
 OVRTOS::OVQueueHandle_t gActuatorCommandsOVQHandle{NULL, "Actuator Commands", 10};
 OVRTOS::OVQueueHandle_t gSystemStatusOVQHandle{NULL, "System Status", 5};
 OVRTOS::OVQueueHandle_t gUserInputOVQHandle{NULL, "User Input", 1};
+OVRTOS::OVQueueHandle_t gUserInputOffboardOVQHandle{NULL, "User Input Offboard", 1};
 
 void StartOpenVentilator() {
 
@@ -32,6 +33,7 @@ void StartOpenVentilator() {
     start_actuator_manager();
     start_emulator_manager();
     start_system_monitor();
-
+    start_pc_comms_manager();
+    
     vTaskStartScheduler();
 }

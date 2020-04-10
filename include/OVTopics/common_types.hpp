@@ -25,4 +25,18 @@ typedef struct {
 
 }  // namespace Actuators
 
+namespace UI{
+enum class UserSystem_Modes{
+    MANUAL_MODE = 0,
+    PRESSURE_CONTROL,
+    VOLUME_CONTROL,
+    PRESSURE_ASSIST, 
+
+    NUM_OF_USERSYSTEMMODES
+
+} ;
+
+}
+
+
 #endif
