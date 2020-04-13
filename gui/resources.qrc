@@ -1,0 +1,15 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>qml/TheHeaderToolBar.qml</file>
+    <file>qml/TheChartsCell.qml</file>
+    <file>qml/OVGui.qml</file>
+    <file>qml/CellBox.qml</file>
+    <file>qml/SimpleChartView.qml</file>
+    <file>qml/TimeAxis.qml</file>
+    <file>qml/YAxis.qml</file>
+    <file>images/baseline-category-24px.svg</file>
+    <file>images/baseline-menu-24px.svg</file>
+    <file>images/baseline-more_vert-24px.svg</file>
+
+</qresource>
+</RCC>
