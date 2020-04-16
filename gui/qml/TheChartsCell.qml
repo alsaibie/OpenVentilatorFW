@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.11
 import QtCharts 2.2
 
 CellBox {
-    Layout.rowSpan: 2
+    // Layout.rowSpan: 2
     Layout.minimumWidth: 700
     id: chartsBox
 

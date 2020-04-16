@@ -17,13 +17,21 @@ ApplicationWindow {
         connectButton.text = isConnected ? "CONNECTED" : "CONNECT"
     }
 
+    function isReadyStatus(state) {
+        isReady = state
+        startStopSwitch.enabled = isReady ? true : false
+    }
+    function operationState(state) {
+
+    }
+
     function incomingLine(text) {
         var current_pos, end_position;
 
         if (dispIncoming) {
             textBox.append(text)
         }
-        
+
         process_msg(text)
 
         current_pos = textflickable.contentY;
@@ -38,7 +46,7 @@ ApplicationWindow {
 
     /* Data Processing Functions */
 
-    function process_msg(text){
+    function process_msg(text) {
 
     }
 
@@ -51,7 +59,11 @@ ApplicationWindow {
 
     /* Properties */
     property bool isConnected: false
+    property bool isPaused: false
+    property bool isHoming: false
+    property bool isReady: false
     property bool dispIncoming: false
+
 
     visible: true
     minimumHeight: 1000
@@ -68,9 +80,7 @@ ApplicationWindow {
         id: sideNav
         width: 800
         height: parent.height
-
         Flickable {
-
             id: textflickable
             flickableDirection: Flickable.VerticalFlick
             anchors.fill: parent
@@ -88,7 +98,6 @@ ApplicationWindow {
             ScrollBar.vertical: ScrollBar {
                 id: textScrollBar
             }
-
         }
     }
     Pane {
@@ -96,86 +105,65 @@ ApplicationWindow {
         anchors.fill: parent
         ColumnLayout {
             anchors.fill: parent
-            GridLayout {
+            RowLayout {
                 anchors.fill: parent
-                flow: GridLayout.TopToBottom
-                rows: 2
+                // flow: GridLayout.TopToBottom
+                // rows: 2
                 CellBox {
                     // title: 'Range Controllers'
+                    // rowSpan : 2
                     Layout.maximumWidth: 250
                     ColumnLayout {
                         anchors.fill: parent
+                        Label {
+                            text: "Pressure Range\n" + pressureSlider.first.value.toFixed(0) + 'mmH2O' + ' : ' + pressureSlider.second.value.toFixed(0) + 'mmH2O'
+                            Layout.fillWidth: true
+                            anchors.bottom: pressureSlider.top
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Material.accent
+                        }
                         RangeSlider {
-                            id: rangeslider
-                            first.value: 0.25;
-                            // rangeslider.handle.radius: 10
-                            second.value: 0.75;
+                            id: pressureSlider
+                            from: 100
+                            to: 700
+                            stepSize: 20
+                            first.value: 200;
+                            second.value: 600;
                             Layout.fillWidth: true
                             ToolTip.visible: hovered
                             ToolTip.delay: 500
-                            ToolTip.text: rangeslider.first.value.toFixed(2) + ' : ' + rangeslider.second.value.toFixed(2)
+                            ToolTip.text: pressureSlider.first.value.toFixed(2) + ' : ' + pressureSlider.second.value.toFixed(2)
+                        }
+                        Label {
+                            text: "Frequency"
+                            Layout.fillWidth: true
+                            anchors.centerIn: frequencyDial.center
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Material.accent
                         }
                         Dial {
-                            id: dial
+                            id: frequencyDial
                             scale: 1.8
+                            stepSize: 1
+                            snapMode: Dial.SnapAlways
+                            from: 20
+                            to: 100
                             Layout.alignment: Qt.AlignHCenter
-                            ToolTip {
-                                parent: dial.handle
-                                visible: dial.pressed
-                                delay: 500
-                                text: dial.value.toFixed(2)
+                            contentItem: Text {
+                                text: frequencyDial.value.toFixed(0) + 'Hz'
+                                color: Material.accent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                opacity: 0.7
+                                // elide: Text.ElideRight
                             }
-                        }
-                    }
-                }
-                CellBox {
-                    // title: 'Spin Boxes'
-                    Layout.maximumWidth: 250
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        SpinBox {
-                            value: 50;editable: true;Layout.fillWidth: true
-                        }
-                        SpinBox {
-                            from: 0
-                            to: items.length - 1
-                            value: 1 // 'Medium'
-                            property var items: ['Small', 'Medium', 'Large']
-                            validator: RegExpValidator {
-                                regExp: new RegExp('(Small|Medium|Large)', 'i')
-                            }
-                            textFromValue: function(value) {
-                                return items[value];
-                            }
-                            valueFromText: function(text) {
-                                for (var i = 0; i < items.length; ++i)
-                                    if (items[i].toLowerCase().indexOf(text.toLowerCase()) === 0)
-                                        return i
-                                return sb.value
-                            }
-                            Layout.fillWidth: true
-                        }
-                        SpinBox {
-                            id: doubleSpinbox
-                            editable: true
-                            from: 0
-                            value: 110
-                            to: 100 * 100
-                            stepSize: 100
-                            property int decimals: 2
-                            property real realValue: value / 100
-                            validator: DoubleValidator {
-                                bottom: Math.min(doubleSpinbox.from, doubleSpinbox.to)
-                                top: Math.max(doubleSpinbox.from, doubleSpinbox.to)
-                            }
-                            textFromValue: function(value, locale) {
-                                return Number(value / 100).toLocaleString(locale, 'f', doubleSpinbox.decimals)
-                            }
-                            valueFromText: function(text, locale) {
-                                return Number.fromLocaleString(locale, text) * 100
-                            }
-                            Layout.fillWidth: true
+                            // ToolTip {
+                            //     parent: frequencyDial.handle
+                            //     visible: frequencyDial.pressed
+                            //     // visible: true
+                            //     delay: 500
+                            //     text: frequencyDial.value.toFixed(2)
+                            onValueChanged: pygui.sendFloatCommand("FrequencySP", frequencyDial.value)
                         }
                     }
                 }
@@ -193,6 +181,7 @@ ApplicationWindow {
                         checked: false
                         text: startStopSwitch.checked ? "START" : "STOP"
                         Layout.fillWidth: true
+                        enabled: false
                     }
                     CheckBox {
                         id: dispLogCheckBox
@@ -213,17 +202,18 @@ ApplicationWindow {
                     Button {
                         text: 'PAUSE'
                         implicitWidth: 140
-                        // onClicked: modalPopup.open()
+                        onClicked: pygui.sendBinaryCommand("Pause", true)
+
                     }
                     Button {
                         text: 'E-STOP'
                         implicitWidth: 140
-                        // onClicked: normalPopup.open()
+                        onClicked: pygui.sendBinaryCommand("E-STOP", true)
                     }
                     Button {
                         text: 'Motion Calibrate'
                         implicitWidth: 230
-                        // onClicked: normalPopup.open()
+                        onClicked: pygui.sendBinaryCommand("MCalibrate", true)
                     }
                 }
             }

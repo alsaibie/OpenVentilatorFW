@@ -18,18 +18,22 @@ ToolBar {
             }
             ToolButton {
                 text: 'Pressure Mode'
+                onClicked: pygui.sendBinaryCommand("PressureMode", true)
             }
             ToolSeparator {}
             ToolButton {
                 text: 'Volume Mode'
+                onClicked: pygui.sendBinaryCommand("VolumeMode", true)
             }
             ToolSeparator {}
             ToolButton {
                 text: 'Breath Assist Mode'
+                onClicked: pygui.sendBinaryCommand("BreathAssistMode", true)
             }
             ToolSeparator {}
             ToolButton {
                 text: 'Manual Mode'
+                onClicked: pygui.sendBinaryCommand("ManualMode", true)
             }
             ToolSeparator {}
         }
