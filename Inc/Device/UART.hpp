@@ -32,6 +32,12 @@ class UART {
 
   ssize_t print(const std::string &s);
 
+  size_t write(uint8_t &c);
+
+  size_t write(const uint8_t *buf, size_t len);
+
+  size_t write(const char *buf, size_t len);
+
   /* Define what to do when a new line is received */
   virtual void process_line(const uint8_t *buf, size_t len) = 0;
 

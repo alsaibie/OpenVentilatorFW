@@ -8,9 +8,12 @@
 #include "OVTopics/user_input_offboard.hpp"
 
 #include "semphr.h"
-#include <array>
 
-//#include "ArduinoJson.h"
+#include <cstring>
+
+#include "ArduinoJson.h"
+
+//#define DEBUG_PRINT
 
 using namespace OVRTOS;
 using namespace OVTopics;
@@ -49,8 +52,8 @@ class VCUART : public UART {
      tx_dma_buffer((uint8_t*)"\n", 1);
   #endif
 
-//    incoming_str.buf = buf;
-//    incoming_str.len = len;
+    memcpy(incoming_str.buf, buf, len);
+    incoming_str.len = len;
 
   }
 
@@ -63,7 +66,7 @@ class PCCommsManager : public OVThread {
  public:
   PCCommsManager()
       :
-      OVThread("PC Communications", 128, pc_comms_m_priority, 100),
+      OVThread("PC Communications", 1024, pc_comms_m_priority, 100),
       VComUART(incoming_rx_stream),
       user_input_offboard_pub(gUserInputOffboardOVQHandle),
       operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek),
@@ -74,6 +77,10 @@ class PCCommsManager : public OVThread {
  protected:
   virtual void run() final {
     VComUART.start();
+
+    const size_t CAPACITY = JSON_ARRAY_SIZE(3);
+    StaticJsonDocument<CAPACITY> doc;
+
     while (1) {
       VComUART.spin_circular();
       operation_status_sub.receive();
@@ -81,13 +88,21 @@ class PCCommsManager : public OVThread {
       system_status_sub.receive();
 
       /* Send States to PC */
-      //            jdoc["Test"] = "GPS";
-      //            jdoc["Time"] = HAL_GetTick();
-      //            JsonArray data = jdoc.createNestedArray("data");
-      //            data.add(3.234);
-      //            data.add(234.234);
-      //            serializeJson(jdoc, Serial);
-      //            Serial.println();
+                  jdoc["Test"] = "GPS";
+                  jdoc["Time"] = HAL_GetTick();
+                  jdoc["Data1"] = 3.23;
+                  jdoc["Data2"] = 3.230;
+//                  JsonArray data = jdoc.createNestedArray("data");
+//                  data.add(3);
+//                  data.add(23);
+                  JsonArray array = doc.to<JsonArray>();
+                  array.add("hello");
+                  array.add(42);
+                  array.add(3.14);
+                  serializeJson(doc, VComUART);
+
+                  VComUART.print("\n");
+
       /* Receive Commands from PC */
 
       /* Relay to OVTopic */
@@ -98,7 +113,9 @@ class PCCommsManager : public OVThread {
       //
       /* Forward debug tx messages TOOD: remove after embedding debug into JSON */
       /* Check incoming */
+#ifdef DEBUG_PRINT
       tx_debug_messages();
+#endif
       debug_print("PCComm Manager Thread\n");
 
       if (incoming_rx_stream.len != 0) {
@@ -148,7 +165,8 @@ class PCCommsManager : public OVThread {
   OVQueueSubscriber<OperationStatus_msg_t> operation_status_sub;
   OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
   OVQueueSubscriber<SystemStatus_msg_t> system_status_sub;
-//    StaticJsonDocument<1024> jdoc;
+  StaticJsonDocument<2048> jdoc;
+
 };
 
 void start_pc_comms_manager(void) {

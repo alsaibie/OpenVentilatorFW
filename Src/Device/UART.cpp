@@ -56,6 +56,18 @@ void UART::spin_circular() {
   }
 }
 
+size_t UART::write(uint8_t &c){
+	return tx_dma_buffer(&c, 1);
+}
+size_t UART::write(const uint8_t *buf, size_t len){
+	 return tx_dma_buffer(buf, len);
+}
+
+size_t UART::write(const char *buf, size_t len){
+	return tx_dma_buffer((uint8_t*) buf, len);
+}
+
+
 ssize_t UART::print(const char *buf, size_t len) {
   return tx_dma_buffer((uint8_t*) buf, len);
 }

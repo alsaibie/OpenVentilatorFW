@@ -33,6 +33,4 @@ void StartOpenVentilator() {
     start_emulator_manager();
     start_system_monitor();
 
-    
-//    vTaskStartScheduler();
 }
