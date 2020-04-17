@@ -14,9 +14,9 @@ std::vector<OVRTOS::OVQueueHandle_t *> OVRTOS::OVQueueBase::ptrOVQH;
 /* Instantiate OVQHandles */
 OVRTOS::OVQueueHandle_t gOperationStatusOVQHandle{NULL, "Operation Status", 1};
 OVRTOS::OVQueueHandle_t gSafetyOVQHandle{NULL, "Safety", 1};
-OVRTOS::OVQueueHandle_t gSensorStatusOVQHandle{NULL, "Sensor Readings", 10};
-OVRTOS::OVQueueHandle_t gActuatorCommandsOVQHandle{NULL, "Actuator Commands", 10};
-OVRTOS::OVQueueHandle_t gSystemStatusOVQHandle{NULL, "System Status", 5};
+OVRTOS::OVQueueHandle_t gSensorStatusOVQHandle{NULL, "Sensor Readings", 1};
+OVRTOS::OVQueueHandle_t gActuatorCommandsOVQHandle{NULL, "Actuator Commands", 1};
+OVRTOS::OVQueueHandle_t gSystemStatusOVQHandle{NULL, "System Status", 1};
 OVRTOS::OVQueueHandle_t gUserInputOVQHandle{NULL, "User Input", 1};
 OVRTOS::OVQueueHandle_t gUserInputOffboardOVQHandle{NULL, "User Input Offboard", 1};
 

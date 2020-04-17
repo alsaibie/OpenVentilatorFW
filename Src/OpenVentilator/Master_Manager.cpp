@@ -6,6 +6,7 @@
 #include "OVTopics/system_status.hpp"
 #include "OVTopics/user_input.hpp"
 
+#include <cstdio>
 
 /* Master Manager */
 using namespace OVRTOS;
@@ -18,12 +19,12 @@ class MasterManager : public OVThread {
    public:
     MasterManager()
         : OVThread("Master Manager", 128, master_m_priority, 50),
-          system_status_pub(gSensorStatusOVQHandle),
+          system_status_pub(gSystemStatusOVQHandle),
           operation_status_pub(gOperationStatusOVQHandle),
-          safety_sub(gSafetyOVQHandle, &on_safety_receive, Receive),
+          safety_sub(gSafetyOVQHandle, &on_safety_peek, Peek),
           user_input_sub(gUserInputOVQHandle, &on_user_input_peek, Peek),
           sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
-          operation_state(DEFAULT_OPERATION_STATE)
+          operation_state(DEFAULT_OPERATION_STATE),SysStatusMsg{0}
            {}
 
    protected:
@@ -33,9 +34,6 @@ class MasterManager : public OVThread {
             user_input_sub.receive();
             sensor_status_sub.receive();
             
-
-//            debug_print("Master Manager Thread\n");
-
             OpStatusMsg.operation_state = operation_state;
 
             operation_status_pub.publish(OpStatusMsg);
@@ -53,30 +51,20 @@ class MasterManager : public OVThread {
 
     void run_state_machine() {
 
-
     }
 
     static void on_user_input_peek(const OVTopics::UserInput_msg_t &msg) {
-            // Serial.print("Flow Rate: ");
-            // Serial.print(msg.flow_sp_lpm);
-            // Serial.print(" Rate: ");
-            // Serial.print(msg.rate_sp_hz);
-            // Serial.print(" IE Ratio: ");
-            // Serial.print(msg.IE_ratio);
-            // Serial.println("");
-    	int a = 1;
+
     }
 
-    static void on_safety_receive(const Safety_msg_t &msg) {
-    	//TODO: if a queue is received and not peeked, warn on peeking since it might not be available to read. or use stream instead.
+    // TODO: for safety and similar queues, a peek will not work, need to read, or ackowledge persistent messages..
+    static void on_safety_peek(const Safety_msg_t &msg) {
         if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
-            // Serial.println("Safety Message Received");
         }
     }
 
     static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
         if(msg.R_Hz == 4){
-            // Serial.println("Sensor Status Msg Received");
         }
     }
 

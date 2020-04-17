@@ -17,7 +17,7 @@
 
 #include "ArduinoJson.h"
 
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 using namespace OVRTOS;
 using namespace OVTopics;
@@ -70,52 +70,48 @@ static VCUART VComUART(incoming_rx_stream);
 class PCCommsManager: public OVThread {
 public:
 	PCCommsManager() :
-			OVThread("PC Communications", 1024, pc_comms_m_priority, 100),
+			OVThread("PC Communications", 1024, pc_comms_m_priority, 500),
 //			VComUART(incoming_rx_stream),
-			user_input_offboard_pub(gUserInputOffboardOVQHandle),
-			operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek),
-			sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
-			system_status_sub(gSystemStatusOVQHandle, &on_system_status_peek, Peek),
-			user_input_sub(gUserInputOVQHandle, &on_user_input_receive, Receive) {
+			user_input_offboard_pub(gUserInputOffboardOVQHandle), operation_status_sub(
+					gOperationStatusOVQHandle, &on_operation_status_peek, Peek), sensor_status_sub(
+					gSensorStatusOVQHandle, &on_sensor_status_peek, Peek), system_status_sub(
+					gSystemStatusOVQHandle, &on_system_status_peek, Peek), user_input_sub(
+					gUserInputOVQHandle, &on_user_input_peek, Peek) {
 	}
 
 protected:
 	virtual void run() final {
 		VComUART.start();
 
-
-
-
 		while (1) {
 			VComUART.spin_circular();
+			/* Receive and relay states to PC */
 			operation_status_sub.receive();
 			sensor_status_sub.receive();
 			system_status_sub.receive();
 			user_input_sub.receive();
 
-			/* Send States to PC */
-
-
-//			serializeJson(doc, VComUART);
-//
-//			VComUART.print("\n");
-
 			/* Receive Commands from PC */
 			if (incoming_rx_stream.len != 0) {
 				/* Process new line TODO: make a stream array to handle a backlog */
+				DynamicJsonDocument doc(100);
+
+				deserializeJson(doc, incoming_rx_stream.buf);
+
+				/* Relay to OVTopic */
+
+				UserInputOffboard_msg_t ui_ob_msg;
+
+				user_input_offboard_pub.publish(ui_ob_msg);
+
 				clear_stream(incoming_rx_stream);
+
 			}
-			/* Relay to OVTopic */
-
-			UserInputOffboard_msg_t ui_ob_msg;
-
-			user_input_offboard_pub.publish(ui_ob_msg);
-
-			/* Forward debug tx messages TOOD: remove after embedding debug into JSON */
-			/* Check incoming */
 
 #ifdef DEBUG_PRINT
-      tx_debug_messages();
+			/* Forward debug tx messages TOOD: remove after embedding debug into JSON */
+
+			tx_debug_messages();
 #endif
 
 			thread_lap();
@@ -146,25 +142,49 @@ private:
 		}
 	}
 
-
 	static void on_operation_status_peek(const OperationStatus_msg_t &msg) {
-		int a = 1;
-	}
-	static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
-		int a = 1;
-	}
-	static void on_system_status_peek(const SystemStatus_msg_t &msg) {
-		int a = 1;
-	}
-	static void on_user_input_receive(const UserInput_msg_t &msg){
-		StaticJsonDocument<1024> doc;
-		JsonArray array = doc.to<JsonArray>();
-		array.add("Inputs");
-		array.add(msg.rate_sp_hz);
-		array.add(msg.flow_sp_lpm);
-		array.add(msg.IE_ratio);
+		/* relay messages to PC */
+		DynamicJsonDocument doc(100);
+		doc["S"] = "OpStatus";
+		doc["OpState"] = msg.operation_state;
 		serializeJson(doc, VComUART);
+		VComUART.print("\n");
+	}
 
+	static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
+		/* relay messages to PC */
+		DynamicJsonDocument doc(250);
+		doc["S"] = "SensorStatus";
+		doc["P"] = msg.P_mmH2O;
+		doc["Q"] = msg.Q_SLPM;
+	}
+
+	static void on_system_status_peek(const SystemStatus_msg_t &msg) {
+		/* relay messages to PC */
+		DynamicJsonDocument doc(250);
+		doc["S"] = "SystemStatus";
+		doc["UTime"] = msg.system.uptime;
+		doc["P"][0] = msg.P.average;
+		doc["P"][1] = msg.P.min;
+		doc["P"][2] = msg.P.max;
+		doc["P"][3] = msg.P.exp;
+		doc["V"][0] = msg.V.average;
+		doc["V"][1] = msg.V.min;
+		doc["V"][2] = msg.V.max;
+		doc["Q"] = msg.Q.slpm;
+
+		serializeJson(doc, VComUART);
+		VComUART.print("\n");
+	}
+	static void on_user_input_peek(const UserInput_msg_t &msg) {
+
+		DynamicJsonDocument doc(250);
+		doc["S"] = "UserInputs";
+		doc["RateSp"] = msg.rate_sp_hz;
+		doc["FlowSp"] = msg.flow_sp_lpm;
+		doc["IESp"] = msg.IE_ratio;
+		doc["SysMode"] = (int)msg.system_mode;
+		serializeJson(doc, VComUART);
 		VComUART.print("\n");
 	}
 
@@ -175,9 +195,6 @@ private:
 	OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
 	OVQueueSubscriber<SystemStatus_msg_t> system_status_sub;
 	OVQueueSubscriber<UserInput_msg_t> user_input_sub;
-//	StaticJsonDocument<2048> jdoc;
-//	const static size_t CAPACITY = JSON_ARRAY_SIZE(20);
-//	StaticJsonDocument<1024> doc;
 
 };
 

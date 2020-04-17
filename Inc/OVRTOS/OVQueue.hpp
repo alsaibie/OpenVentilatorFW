@@ -41,7 +41,9 @@ class OVQueuePublisher : public OVQueueBase {
     OVQueuePublisher(OVQueueHandle_t &qh) : OVQueueBase(qh, sizeof(OVQueuemsgT)) {}
 
     inline uint32_t publish(OVQueuemsgT &msg) {
-        if (xQueueSendToBack(ovqh.handle, &msg, (TickType_t)2) == pdTRUE) {
+//        if (xQueueSendToBack(ovqh.handle, &msg, (TickType_t)2) == pdTRUE) {
+        	if (xQueueOverwrite(ovqh.handle, &msg) == pdTRUE) {	// TODO: create a seperate multi-publisher object
+        	/* Save a copy for peeking */
             return pdPASS;
         } else {
             return pdFAIL;
