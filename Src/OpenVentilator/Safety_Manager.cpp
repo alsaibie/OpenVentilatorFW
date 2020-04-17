@@ -33,7 +33,7 @@ class SafetyManager : public OVThread {
 
             safety_msg.system_error = SystemErrors_Modes::FLOW_SENSOR_ERROR;
             safety_pub.publish(safety_msg);
-            debug_print("Safety Manager Thread\n");
+//            debug_print("Safety Manager Thread\n");
             thread_lap();
         }
     }

@@ -15,6 +15,8 @@ class SensorManager : public OVThread {
    protected:
     virtual void run() {
         while (1) {
+        	SensorMsg.R_Hz = 10;
+        	sensor_status_pub.publish(SensorMsg);
             thread_lap();
         }
     }

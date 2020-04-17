@@ -6,6 +6,7 @@
 #include "UI/Button.hpp"
 #include "UI/Potentiometer.hpp"
 
+#include <cstring>
 using namespace UI;
 using namespace OVRTOS;
 using namespace OVTopics;
@@ -17,7 +18,7 @@ using namespace OVTopics;
 class UIManager : public OVThread {
    public:
     UIManager()
-        : OVThread("UI Manager", 128, ui_m_priority, 50),
+        : OVThread("UI Manager", 128, ui_m_priority, 200),
           btn1("Button 1", BTN1_Pin, &on_button_1_press),
           btn2("Button 2", BTN2_Pin, &on_button_2_press),
           btn3("Button 3", BTN3_Pin, &on_button_3_press),
@@ -60,7 +61,8 @@ class UIManager : public OVThread {
             auto pot2val = pot2.getReading();
             auto pot3val = pot3.getReading();
 
-
+            char arr[10];
+            itoa(pot2val, arr, 10);
             /* Translated to Commands */
             OVTopics::UserInput_msg_t ui_msg;
             ui_msg.system_mode = user_system_modes;
@@ -74,6 +76,7 @@ class UIManager : public OVThread {
 
             /* Publish Commands */
             user_input_pub.publish(ui_msg);
+
             /* Read Status */
             system_status_sub.receive();
             operation_status_sub.receive();
@@ -105,8 +108,8 @@ class UIManager : public OVThread {
     OVQueuePublisher<OVTopics::UserInput_msg_t> user_input_pub;
 
     /* Subs */
-    OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
     OVQueueSubscriber<OVTopics::SystemStatus_msg_t> system_status_sub;
+    OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
 };
 
 void start_ui_manager() {

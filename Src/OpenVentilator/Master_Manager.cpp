@@ -21,7 +21,7 @@ class MasterManager : public OVThread {
           system_status_pub(gSensorStatusOVQHandle),
           operation_status_pub(gOperationStatusOVQHandle),
           safety_sub(gSafetyOVQHandle, &on_safety_receive, Receive),
-          user_input_sub(gUserInputOVQHandle, &on_user_input_receive, Receive),
+          user_input_sub(gUserInputOVQHandle, &on_user_input_peek, Peek),
           sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
           operation_state(DEFAULT_OPERATION_STATE)
            {}
@@ -34,11 +34,15 @@ class MasterManager : public OVThread {
             sensor_status_sub.receive();
             
 
-            debug_print("Master Manager Thread\n");
+//            debug_print("Master Manager Thread\n");
 
             OpStatusMsg.operation_state = operation_state;
 
             operation_status_pub.publish(OpStatusMsg);
+
+            SysStatusMsg.Q.slpm = 10;
+
+            system_status_pub.publish(SysStatusMsg);
 
             thread_lap();
         }
@@ -52,7 +56,7 @@ class MasterManager : public OVThread {
 
     }
 
-    static void on_user_input_receive(const OVTopics::UserInput_msg_t &msg) {
+    static void on_user_input_peek(const OVTopics::UserInput_msg_t &msg) {
             // Serial.print("Flow Rate: ");
             // Serial.print(msg.flow_sp_lpm);
             // Serial.print(" Rate: ");
@@ -60,9 +64,11 @@ class MasterManager : public OVThread {
             // Serial.print(" IE Ratio: ");
             // Serial.print(msg.IE_ratio);
             // Serial.println("");
+    	int a = 1;
     }
 
     static void on_safety_receive(const Safety_msg_t &msg) {
+    	//TODO: if a queue is received and not peeked, warn on peeking since it might not be available to read. or use stream instead.
         if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
             // Serial.println("Safety Message Received");
         }

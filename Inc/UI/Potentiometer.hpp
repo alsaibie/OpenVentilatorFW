@@ -15,6 +15,7 @@ class Potentionmeter {
 
     inline void spinSampler(uint32_t dt){
         //TODO: Add sampler and filter
+    	output_value = getSample();
     };
 
 

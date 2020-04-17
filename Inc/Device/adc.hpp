@@ -19,8 +19,8 @@ extern "C" {
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_adc.h"
 
-#define NUM_OF_ADC_PINS 4
-#define NUM_ADC1_CHANNNELS 4
+#define NUM_OF_ADC_PINS 5
+#define NUM_ADC1_CHANNNELS 5
 
 typedef struct {
   ADC_TypeDef * adc_peri;
