@@ -146,7 +146,7 @@ private:
 		/* relay messages to PC */
 		DynamicJsonDocument doc(100);
 		doc["S"] = "OpStatus";
-		doc["OpState"] = msg.operation_state;
+		doc["OpState"] = (int)msg.operation_state;
 		serializeJson(doc, VComUART);
 		VComUART.print("\n");
 	}

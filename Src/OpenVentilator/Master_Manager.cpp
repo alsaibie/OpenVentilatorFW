@@ -64,8 +64,7 @@ class MasterManager : public OVThread {
     }
 
     static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
-        if(msg.R_Hz == 4){
-        }
+
     }
 
     /* Pubs */

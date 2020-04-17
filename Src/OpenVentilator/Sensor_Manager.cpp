@@ -10,10 +10,10 @@ using namespace OVRTOS;
 using namespace OVTopics;
 using namespace Sensors;
 
-FlowSensorParameters_t fsensor_param = {.sensitivity = 2, .offset = 0, .v_to_mmH2O=2, .d_mmH2O_to_SLPM = 20, .cutt_off_f = 20};
+FlowSensorParameters_t fsensor_param = {.sensitivity = 2, .offset = 0, .v_to_mmH2O=2, .d_mmH2O_to_SLPM = 20, .cut_off_f = 20};
 FlowSensor fsensor(fsensor_param);
 
-PressureSensorParameters_t psensor_param =  {.sensitivity = 2, .offset = 0, .v_to_mmH2O=2, .cutt_off_f = 20};
+PressureSensorParameters_t psensor_param =  {.sensitivity = 2, .offset = 0, .v_to_mmH2O=2, .cut_off_f = 20};
 PressureSensor psensor(psensor_param);
 
 class SensorManager : public OVThread {
@@ -31,6 +31,7 @@ class SensorManager : public OVThread {
 
         	fsensor.spinSampler(HAL_GetTick() - last_millis);
         	psensor.spinSampler(HAL_GetTick() - last_millis);
+        	last_millis = HAL_GetTick();
 
         	flow_data = fsensor.getReading();
         	pressure_data = psensor.getReading();
