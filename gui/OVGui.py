@@ -19,7 +19,7 @@ def check_usb_available():
     usb_com_port = None
     usb_ports = None
     usb_ports = [p.device for p in serial.tools.list_ports.comports()
-                if 'USB' in p.description]
+                if 'ST' in p.description]
     if not usb_ports:
         warnings.warn("No Ports Found")
     elif len(usb_ports) > 1:
@@ -31,7 +31,6 @@ def check_usb_available():
 
 # @pyqtSlot()
 
-
 class CommTask(QObject):
     def __init__(self, parent=None):
         QObject.__init__(self, parent)
@@ -40,28 +39,46 @@ class CommTask(QObject):
     newline_signal = pyqtSignal(str)  # Send new line to GUI
     isready_status = pyqtSignal(bool)
 
+    # charts to update
+    update_plot = pyqtSignal(float, float, str)
+
     @pyqtSlot()
     def __init__(self):
         super(CommTask, self).__init__()
         self.connected = False
-        self.debugTest = True
+        self.debugTest = False
         self.mcu_serial = None
 
     def run(self):
         while True:
             if self.connected:
                 # Read Line, decode and emit
-                # line = ser.readline().decode('utf-8')
-                # print(line)
-                line = "New Msg"
-                time.sleep(0.5)
+                line = self.mcu_serial.readline().decode('utf-8')
+                print(line)
+                self.process_msg(line)
                 self.isready_status.emit(True)
-                self.newline_signal.emit(line)
+                # line = "New Msg"
+                # time.sleep(0.05)
+
             elif self.debugTest:
                 line = "No Connection"
                 self.newline_signal.emit(line)
                 self.isready_status.emit(False)
                 time.sleep(0.5)
+
+    def process_msg(self, json_line):
+        json_doc = json.loads(json_line)
+        print(json_doc["T"])
+        if(json_doc["S"] == "SystemStatus"):
+            # print(type(json_doc['P']))
+            self.update_plot.emit(json_doc["T"]/1000,json_doc['P'][0],"Pressure")
+        # self.newline_signal.emit(json_doc)
+        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow1")
+        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow2")
+        # self.update_plot.emit(json_doc["T"]/1000,json_doc["RateSp"],"Volume")
+        # self.update_plot.emit(json_doc["T"]/1000,json_doc["IESp"],"Pressure")
+        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"PEEP")
+
 
 class PYGUI(QObject):
     connection_status = pyqtSignal(bool)
@@ -79,22 +96,34 @@ class PYGUI(QObject):
         self.thread.started.connect(self.comm_task.run)
         self.thread.start()
 
-
     def connect_device(self):
-        print("Connecting Device")
         available_port = check_usb_available()
-        
-        if available_port :  # TODO: replace with if serial connection is successful
-            mcu_serial = serial.Serial(available_port, 115200)
-            if mcu_serial:
+        print("Connecting Device, port: " + available_port)
+        if available_port :  
+            self.comm_task.mcu_serial = serial.Serial(available_port, 115200, timeout = 5)
+
+            if self.comm_task.mcu_serial:
+                
+                self.comm_task.mcu_serial.flushInput()
+                # self.comm_task.mcu_serial.flushOutput()
+                time.sleep(0.1)
+                self.comm_task.mcu_serial.read(5) # Read first line as well
+                print("readbytes")
+                self.comm_task.mcu_serial.readline() # Read first line as well
+                self.comm_task.mcu_serial.readline() # Read first line as well
+                self.comm_task.mcu_serial.readline() # Read first line as well
                 self.comm_task.connected = True
                 self.connection_status.emit(True)
             else :
                 print("Error Connecting to " + available_port + " Port")
 
-    def disconnect_device(self):
-        if True:  # TODO: replace with if serial disconnection is successful
-            self.comm_task.connected = False
+    def disconnect_device(self):   
+        if self.comm_task.mcu_serial.isOpen():
+            self.comm_task.connected = False 
+            time.sleep(0.5)
+            self.comm_task.mcu_serial.flushInput()
+            self.comm_task.mcu_serial.flushOutput()
+            self.comm_task.mcu_serial.close() 
             self.connection_status.emit(False)
 
     @pyqtSlot(str, bool)
@@ -177,6 +206,10 @@ if __name__ == "__main__":
     pygui.connection_status.connect(rootObject.connectionStatus)
     pygui.comm_task.newline_signal.connect(rootObject.incomingLine)
     pygui.comm_task.isready_status.connect(rootObject.isReadyStatus)
+
+    #Connect Plot Update Signals
+    pygui.comm_task.update_plot.connect(rootObject.updatePlot) 
+
     if not engine.rootObjects():
         sys.exit(-1)
 

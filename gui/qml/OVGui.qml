@@ -21,6 +21,7 @@ ApplicationWindow {
         isReady = state
         startStopSwitch.enabled = isReady ? true : false
     }
+
     function operationState(state) {
 
     }
@@ -32,8 +33,6 @@ ApplicationWindow {
             textBox.append(text)
         }
 
-        process_msg(text)
-
         current_pos = textflickable.contentY;
         end_position = getEndPos()
 
@@ -44,10 +43,10 @@ ApplicationWindow {
         }
     }
 
-    /* Data Processing Functions */
-
-    function process_msg(text) {
-
+    /* Chart Update */
+    function updatePlot(x, y, seriesName) {
+        /* trampoline */
+        chartsBox.updatePlot(x, y, seriesName)
     }
 
     /* Helper Functions */
@@ -63,7 +62,6 @@ ApplicationWindow {
     property bool isHoming: false
     property bool isReady: false
     property bool dispIncoming: false
-
 
     visible: true
     minimumHeight: 1000
@@ -107,11 +105,7 @@ ApplicationWindow {
             anchors.fill: parent
             RowLayout {
                 anchors.fill: parent
-                // flow: GridLayout.TopToBottom
-                // rows: 2
                 CellBox {
-                    // title: 'Range Controllers'
-                    // rowSpan : 2
                     Layout.maximumWidth: 250
                     ColumnLayout {
                         anchors.fill: parent
@@ -155,19 +149,14 @@ ApplicationWindow {
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                                 opacity: 0.7
-                                // elide: Text.ElideRight
                             }
-                            // ToolTip {
-                            //     parent: frequencyDial.handle
-                            //     visible: frequencyDial.pressed
-                            //     // visible: true
-                            //     delay: 500
-                            //     text: frequencyDial.value.toFixed(2)
                             onValueChanged: pygui.sendFloatCommand("FrequencySP", frequencyDial.value)
                         }
                     }
                 }
-                TheChartsCell {}
+                TheChartsCell {
+                    id: chartsBox // Need to expose imported parent object in order to reference it
+                }
             }
             CellBox {
                 // title: 'Buttons'
