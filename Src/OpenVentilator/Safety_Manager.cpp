@@ -58,6 +58,8 @@ class SafetyManager : public OVThread {
     OVQueueSubscriber<UserInput_msg_t> user_input_sub;
     OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
     OVQueueSubscriber<OperationStatus_msg_t> operation_status_sub;
+
+    /* */
 };
 
 void start_safety_manager(void) {

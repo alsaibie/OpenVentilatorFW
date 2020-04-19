@@ -54,13 +54,16 @@ class MasterManager : public OVThread {
     }
 
     static void on_user_input_peek(const OVTopics::UserInput_msg_t &msg) {
+    	//TODO: check
 
     }
 
     // TODO: for safety and similar queues, a peek will not work, need to read, or ackowledge persistent messages..
     static void on_safety_peek(const Safety_msg_t &msg) {
         if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
+
         }
+
     }
 
     static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {

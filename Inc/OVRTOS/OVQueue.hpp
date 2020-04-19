@@ -5,6 +5,8 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+#include <functional>
+
 namespace OVRTOS {
 
 typedef enum { Receive = 0, Peek } OVQReadMode;
@@ -60,6 +62,40 @@ class OVQueueSubscriber : public OVQueueBase {
 
    public:
     OVQueueSubscriber(OVQueueHandle_t &qh, callbackT cb_, OVQReadMode mode)
+        : OVQueueBase(qh, sizeof(OVQueuemsgT)), cb(cb_), read_mode(mode) {}
+
+    inline uint32_t receive() {
+        if (read_mode == Receive) {
+            if (xQueueReceive(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
+                cb(msg);
+                return pdPASS;
+            } else {
+                return pdFAIL;
+            }
+        } else if (read_mode == Peek) {
+            if (xQueuePeek(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
+                cb(msg);
+                return pdPASS;
+            } else {
+                return pdFAIL;
+            }
+        } else {
+            return pdFAIL;
+        }
+    }
+
+   private:
+    OVQueuemsgT msg;
+    callbackT cb;
+    OVQReadMode read_mode;
+};
+
+template <typename OVQueuemsgT>
+class OVQueueSubscriber2 : public OVQueueBase {
+//    typedef void (*callbackT)(const OVQueuemsgT &);
+	typedef std::function<void(const OVQueuemsgT &)> callbackT;
+   public:
+    OVQueueSubscriber2(OVQueueHandle_t &qh, callbackT cb_, OVQReadMode mode)
         : OVQueueBase(qh, sizeof(OVQueuemsgT)), cb(cb_), read_mode(mode) {}
 
     inline uint32_t receive() {

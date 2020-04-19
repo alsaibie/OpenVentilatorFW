@@ -70,18 +70,28 @@ static VCUART VComUART(incoming_rx_stream);
 class PCCommsManager: public OVThread {
 public:
 	PCCommsManager() :
-			OVThread("PC Communications", 1024, pc_comms_m_priority, 500),
+			OVThread("PC Communications", 2056, pc_comms_m_priority, 100),
 //			VComUART(incoming_rx_stream),
 			user_input_offboard_pub(gUserInputOffboardOVQHandle), operation_status_sub(
-					gOperationStatusOVQHandle, &on_operation_status_peek, Peek), sensor_status_sub(
-					gSensorStatusOVQHandle, &on_sensor_status_peek, Peek), system_status_sub(
-					gSystemStatusOVQHandle, &on_system_status_peek, Peek), user_input_sub(
-					gUserInputOVQHandle, &on_user_input_peek, Peek) {
+					gOperationStatusOVQHandle,
+					std::bind(&PCCommsManager::on_operation_status_peek, this,
+							std::placeholders::_1), Peek), sensor_status_sub(
+					gSensorStatusOVQHandle,
+					std::bind(&PCCommsManager::on_sensor_status_peek, this,
+							std::placeholders::_1), Peek), system_status_sub(
+					gSystemStatusOVQHandle,
+					std::bind(&PCCommsManager::on_system_status_peek, this,
+							std::placeholders::_1), Peek), user_input_sub(
+					gUserInputOVQHandle,
+					std::bind(&PCCommsManager::on_user_input_peek, this,
+							std::placeholders::_1), Peek), ui_ob_msg { 0 } {
 	}
 
 protected:
 	virtual void run() final {
 		VComUART.start();
+
+		ui_ob_msg.system_mode = UI::UserSystem_Modes::Manual_Mode;
 
 		while (1) {
 			VComUART.spin_circular();
@@ -99,8 +109,11 @@ protected:
 				deserializeJson(doc, incoming_rx_stream.buf);
 
 				/* Relay to OVTopic */
+				ui_ob_msg.flow_sp_lpm = doc["flow_lpm"];
+				ui_ob_msg.rate_sp_hz  = doc["rate_Hz"];
+				ui_ob_msg.IE_ratio    = doc["ie_ratio"];
 
-				UserInputOffboard_msg_t ui_ob_msg;
+				ui_ob_msg.system_mode = static_cast<UI::UserSystem_Modes>(static_cast<int>(doc["system_mode"]));
 
 				user_input_offboard_pub.publish(ui_ob_msg);
 
@@ -113,7 +126,6 @@ protected:
 
 			tx_debug_messages();
 #endif
-
 			thread_lap();
 		}
 	}
@@ -142,28 +154,38 @@ private:
 		}
 	}
 
-	static void on_operation_status_peek(const OperationStatus_msg_t &msg) {
+	void on_operation_status_peek(const OperationStatus_msg_t &msg) {
 		/* relay messages to PC */
-		DynamicJsonDocument doc(100);
+		const size_t capacity = JSON_OBJECT_SIZE(3);
+		StaticJsonDocument<capacity> doc;
+		doc["T"] = HAL_GetTick();
 		doc["S"] = "OpStatus";
-		doc["OpState"] = (int)msg.operation_state;
+		doc["OpState"] = (int) msg.operation_state;
 		serializeJson(doc, VComUART);
-		VComUART.print("\n");
+		VComUART.EOL();
 	}
 
-	static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
+	void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
 		/* relay messages to PC */
-		DynamicJsonDocument doc(250);
+		const size_t capacity = JSON_OBJECT_SIZE(4);
+		StaticJsonDocument<capacity> doc;
+
+		doc["T"] = HAL_GetTick();
 		doc["S"] = "SensorStatus";
 		doc["P"] = msg.P_mmH2O;
 		doc["Q"] = msg.Q_SLPM;
+
+		serializeJson(doc, VComUART);
+		VComUART.EOL();
 	}
 
-	static void on_system_status_peek(const SystemStatus_msg_t &msg) {
+	void on_system_status_peek(const SystemStatus_msg_t &msg) {
 		/* relay messages to PC */
-		DynamicJsonDocument doc(250);
+		const size_t capacity = JSON_OBJECT_SIZE(10);
+		StaticJsonDocument<capacity> doc;
+
+		doc["T"] = msg.system.uptime;
 		doc["S"] = "SystemStatus";
-		doc["UTime"] = msg.system.uptime;
 		doc["P"][0] = msg.P.average;
 		doc["P"][1] = msg.P.min;
 		doc["P"][2] = msg.P.max;
@@ -171,30 +193,35 @@ private:
 		doc["V"][0] = msg.V.average;
 		doc["V"][1] = msg.V.min;
 		doc["V"][2] = msg.V.max;
-		doc["Q"] = msg.Q.slpm;
+		doc["Q"]    = msg.Q.slpm;
 
 		serializeJson(doc, VComUART);
-		VComUART.print("\n");
+		VComUART.EOL();
 	}
-	static void on_user_input_peek(const UserInput_msg_t &msg) {
+	void on_user_input_peek(const UserInput_msg_t &msg) {
+		const size_t capacity = JSON_OBJECT_SIZE(6);
+		StaticJsonDocument<capacity> doc;
 
-		DynamicJsonDocument doc(250);
+		doc["T"] = HAL_GetTick();
 		doc["S"] = "UserInputs";
 		doc["RateSp"] = msg.rate_sp_hz;
 		doc["FlowSp"] = msg.flow_sp_lpm;
-		doc["IESp"] = msg.IE_ratio;
-		doc["SysMode"] = (int)msg.system_mode;
+		doc["IESp"]   = msg.IE_ratio;
+		doc["SysMode"] = (int) msg.system_mode;
+
 		serializeJson(doc, VComUART);
-		VComUART.print("\n");
+		VComUART.EOL();
 	}
 
 	/* Pubs */
 	OVQueuePublisher<UserInputOffboard_msg_t> user_input_offboard_pub;
 	/* Subs */
-	OVQueueSubscriber<OperationStatus_msg_t> operation_status_sub;
-	OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
-	OVQueueSubscriber<SystemStatus_msg_t> system_status_sub;
-	OVQueueSubscriber<UserInput_msg_t> user_input_sub;
+	OVQueueSubscriber2<OperationStatus_msg_t> operation_status_sub;
+	OVQueueSubscriber2<SensorStatus_msg_t> sensor_status_sub;
+	OVQueueSubscriber2<SystemStatus_msg_t> system_status_sub;
+	OVQueueSubscriber2<UserInput_msg_t> user_input_sub;
+
+	UserInputOffboard_msg_t ui_ob_msg;
 
 };
 

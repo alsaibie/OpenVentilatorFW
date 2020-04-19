@@ -27,14 +27,24 @@ typedef struct {
 
 namespace UI{
 enum class UserSystem_Modes{
-    MANUAL_MODE = 0,
-    PRESSURE_CONTROL,
-    VOLUME_CONTROL,
-    PRESSURE_ASSIST, 
+    Manual_Mode = 1,
+    Pressure_Control,
+    Volume_Control,
+    Pressure_Assist,
 
-    NUM_OF_USERSYSTEMMODES
-
+    EndOfList
 } ;
+
+
+inline UserSystem_Modes& operator++(UserSystem_Modes& m)
+{
+	m = static_cast<UserSystem_Modes>(static_cast<int>(m)+1);
+
+	if (m == UserSystem_Modes::EndOfList){m = UserSystem_Modes::Manual_Mode;}
+
+	return m;
+}
+
 
 }
 

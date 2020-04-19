@@ -46,12 +46,10 @@ uint32_t get_pin_exti_id(uint32_t GPIO_Pin) {
     GPIO_Pin = GPIO_Pin >> 1;
     extid++;
   }
-
   return extid;
 }
 
 void attach_exti_to_cb(uint32_t GPIO_Pin, callback_t cb_) {
-
   uint8_t extid = get_pin_exti_id(GPIO_Pin);
   uint8_t get_pin_exti_id(GPIO_Pin);
   exti_cb_list[extid].cb = cb_;

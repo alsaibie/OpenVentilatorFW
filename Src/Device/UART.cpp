@@ -7,14 +7,16 @@
  */
 
 
-
 #include "Device/UART.hpp"
 #include <cstring>
+#include "FreeRTOS.h"
+#include "semphr.h"
 #define LF '\n'
 #define CR '\r'
 #define CRLF '\r\n'
 
 
+static bool mutex = false;
 
 void UART::start() {
   /* This starts a circular non-blocking receive task -
@@ -85,25 +87,35 @@ ssize_t UART::print(const char *buf) {
   return len;
 }
 
+size_t UART::EOL(){
+	const uint8_t a = 10;
+	return tx_dma_buffer(&a, 1);
+}
+
 ssize_t UART::print(const std::string &s) {
   return tx_dma_buffer((uint8_t*) s.c_str(), s.length());
 }
 
 ssize_t UART::tx_dma_buffer(const uint8_t *buf, size_t len) {
 
-  /* Loop if tx length is > tx buffer size */
-  size_t llen = len;
-  while (len) {
-    size_t packet_len = len < UART_TX_BUFFER_SIZE ? len : UART_TX_BUFFER_SIZE;
-    memcpy(dma_tx_buffer, buf, packet_len);
-    if (HAL_UART_Transmit_DMA(&huart, dma_tx_buffer, packet_len) != HAL_OK)
-      return -1;
-    HAL_Delay(5); // Breath
-    buf += packet_len;
-    len -= packet_len;
-  }
+	while ((huart.gState != HAL_UART_STATE_READY))
+		;
 
-  return llen;
+	/* Loop if tx length is > tx buffer size */
+	size_t llen = len;
+	while (len) {
+		size_t packet_len =
+				len < UART_TX_BUFFER_SIZE ? len : UART_TX_BUFFER_SIZE;
+		memcpy(dma_tx_buffer, buf, packet_len);
+		if (HAL_UART_Transmit_DMA(&huart, dma_tx_buffer, packet_len) != HAL_OK)
+			return -1;
+//    HAL_Delay(1); // Breath
+		//TODO: Why need to delay? Is there a better way to check some conditions?
+		buf += packet_len;
+		len -= packet_len;
+	}
+
+	return llen;
 }
 
 ssize_t UART::rx_dma_buffer(const uint8_t *buf, size_t len) {
@@ -144,6 +156,7 @@ ssize_t UART::rx_dma_buffer(const uint8_t *buf, size_t len) {
 
 /* UART Callbacks  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+
 
 }
 

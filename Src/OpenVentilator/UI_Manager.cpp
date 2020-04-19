@@ -27,8 +27,8 @@ class UIManager : public OVThread {
           pot3("Potentiometer 3", POT3_ADCPin),
           user_input_pub(gUserInputOVQHandle),
           system_status_sub(gSystemStatusOVQHandle, &on_system_status_peek, Peek),
-          operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek),
-          user_system_modes(UserSystem_Modes::MANUAL_MODE) {
+          operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek){
+//          user_system_mode(UserSystem_Modes::MANUAL_MODE) {
         params.ie_min = 0.5;
         params.ie_max = 3.0;
         params.flow_rate_lpm_max = 60;
@@ -54,6 +54,7 @@ class UIManager : public OVThread {
             pot1.spinSampler(HAL_GetTick() - last_millis);
             pot2.spinSampler(HAL_GetTick() - last_millis);
             pot3.spinSampler(HAL_GetTick() - last_millis);
+
             last_millis = HAL_GetTick();
 
             /* Read Inputs */
@@ -65,7 +66,12 @@ class UIManager : public OVThread {
             itoa(pot2val, arr, 10);
             /* Translated to Commands */
             OVTopics::UserInput_msg_t ui_msg;
-            ui_msg.system_mode = user_system_modes;
+
+            //TODO: a button press changes
+
+            ui_msg.system_mode = user_system_mode;
+
+            /* Pot Inputs */
             uint32_t adc_range = (2 ^ 12);
 
             ui_msg.flow_sp_lpm =
@@ -74,14 +80,16 @@ class UIManager : public OVThread {
                 pot2val * (params.rate_hz_max - params.rate_hz_min) / adc_range + params.rate_hz_min;
             ui_msg.IE_ratio = pot3val * (params.ie_max - params.ie_max) / adc_range + params.ie_min;
 
+
             /* Publish Commands */
             user_input_pub.publish(ui_msg);
 
-            /* Read Status */
+            /* Read Status & Display Updates in cb */
             system_status_sub.receive();
+
             operation_status_sub.receive();
 
-            /* Update Display */
+            //TODO: REFRESH DISPLAY
 
             /* Wrap run */
             thread_lap();
@@ -89,19 +97,43 @@ class UIManager : public OVThread {
     }
 
    private:
+    void process_buttons(){
+
+    	/* Switch to next user mode on long btn 2 press */
+    	static uint32_t last_btn2pressed_millis = 0;
+    	if(HAL_GPIO_ReadPin(BTN2_GPIO_Port, BTN2_Pin) == SET){
+    		if(HAL_GetTick() - last_btn2pressed_millis > btn2_delay_ms){
+    			++user_system_mode;
+    		}
+
+    	}else{
+    		last_btn2pressed_millis = HAL_GetTick();
+    	}
+
+    }
+
     static void on_button_1_press(void) {}
 
-    static void on_button_2_press(void) {}
+    static void on_button_2_press(void) {
+    	btn2_pressed = true; //TODO: no need for interrupt, just poll instead
+    }
 
     static void on_button_3_press(void) {}
 
-    static void on_system_status_peek(const OVTopics::SystemStatus_msg_t &msg) {}
+    static void on_system_status_peek(const OVTopics::SystemStatus_msg_t &msg) {
+    	/* Display on monitor */
+    }
 
-    static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {}
+    static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {
+    	/* Display on monitor */
+    }
 
-    UserSystem_Modes user_system_modes;
+    static UserSystem_Modes user_system_mode;
 
     Button btn1, btn2, btn3;
+    static bool btn2_pressed;
+    static uint32_t const btn2_delay_ms = 2000;
+
     Potentionmeter pot1, pot2, pot3;
 
     /* Pubs */
@@ -109,8 +141,13 @@ class UIManager : public OVThread {
 
     /* Subs */
     OVQueueSubscriber<OVTopics::SystemStatus_msg_t> system_status_sub;
+
     OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
 };
+
+
+UserSystem_Modes UIManager::user_system_mode = UserSystem_Modes::Manual_Mode;
+bool UIManager::btn2_pressed = false;
 
 void start_ui_manager() {
     UIManager *ptr_input = new UIManager();

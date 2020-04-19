@@ -32,6 +32,8 @@ class UART {
 
   ssize_t print(const std::string &s);
 
+  size_t EOL();
+
   size_t write(uint8_t &c);
 
   size_t write(const uint8_t *buf, size_t len);

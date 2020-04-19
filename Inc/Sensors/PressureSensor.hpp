@@ -30,6 +30,7 @@ class PressureSensor : AnalogInterface {
 
    private:
     PressureSensorParameters_t parameters;
+
     PressureSensorData_t pressure_data;
 };
 }  // namespace Sensors
