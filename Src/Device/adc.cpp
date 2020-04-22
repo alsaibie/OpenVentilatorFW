@@ -8,7 +8,8 @@
 
 #include "Device/adc.hpp"
 #include "stm32f4xx_hal.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 static const float Vref = 3.3f;
 
 uint32_t adc1_values[NUM_OF_ADC_PINS] = {0, 0};
@@ -22,7 +23,7 @@ uint16_t get_adc_reading(ADC_Pin_t &adc_pin){
 
   if (!dma_started){
     HAL_ADC_Start_DMA(&hadc1, adc1_values, NUM_ADC1_CHANNNELS);
-    HAL_Delay(5);
+    vTaskDelay(5);
     dma_started = true;
   }
 

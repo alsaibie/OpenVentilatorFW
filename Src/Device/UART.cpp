@@ -11,6 +11,7 @@
 #include <cstring>
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "task.h"
 #define LF '\n'
 #define CR '\r'
 #define CRLF '\r\n'
@@ -83,7 +84,7 @@ ssize_t UART::print(const char *buf) {
 
   if (HAL_UART_Transmit_DMA(&huart, (uint8_t *)(buf-=(len+1)), len) != HAL_OK)
     return -1;
-  HAL_Delay(5);  // Breath
+  vTaskDelay(5);  // Breath
   return len;
 }
 
@@ -109,8 +110,6 @@ ssize_t UART::tx_dma_buffer(const uint8_t *buf, size_t len) {
 		memcpy(dma_tx_buffer, buf, packet_len);
 		if (HAL_UART_Transmit_DMA(&huart, dma_tx_buffer, packet_len) != HAL_OK)
 			return -1;
-//    HAL_Delay(1); // Breath
-		//TODO: Why need to delay? Is there a better way to check some conditions?
 		buf += packet_len;
 		len -= packet_len;
 	}

@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "Device/dwt.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -50,6 +50,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -58,6 +60,7 @@ void StartOpenVentilator(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define APB1Hz 42000000
 #define USER_Btn_Pin GPIO_PIN_13
 #define USER_Btn_GPIO_Port GPIOC
 #define USER_Btn_EXTI_IRQn EXTI15_10_IRQn
@@ -90,10 +93,16 @@ void StartOpenVentilator(void);
 #define STLK_RX_GPIO_Port GPIOD
 #define STLK_TX_Pin GPIO_PIN_9
 #define STLK_TX_GPIO_Port GPIOD
+#define M1PWM_Pin GPIO_PIN_15
+#define M1PWM_GPIO_Port GPIOD
 #define USB_PowerSwitchOn_Pin GPIO_PIN_6
 #define USB_PowerSwitchOn_GPIO_Port GPIOG
 #define USB_OverCurrent_Pin GPIO_PIN_7
 #define USB_OverCurrent_GPIO_Port GPIOG
+#define M1EN_Pin GPIO_PIN_8
+#define M1EN_GPIO_Port GPIOC
+#define M1DIR_Pin GPIO_PIN_9
+#define M1DIR_GPIO_Port GPIOC
 #define USB_SOF_Pin GPIO_PIN_8
 #define USB_SOF_GPIO_Port GPIOA
 #define USB_VBUS_Pin GPIO_PIN_9
@@ -108,14 +117,8 @@ void StartOpenVentilator(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define M2STP_Pin GPIO_PIN_4
-#define M2STP_GPIO_Port GPIOD
-#define M2DIR_Pin GPIO_PIN_5
-#define M2DIR_GPIO_Port GPIOD
-#define M1STP_Pin GPIO_PIN_6
-#define M1STP_GPIO_Port GPIOD
-#define M1DIR_Pin GPIO_PIN_7
-#define M1DIR_GPIO_Port GPIOD
+#define M1STP_Pin GPIO_PIN_10
+#define M1STP_GPIO_Port GPIOC
 #define LD2_Pin GPIO_PIN_7
 #define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */

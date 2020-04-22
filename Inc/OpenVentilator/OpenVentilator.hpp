@@ -6,6 +6,11 @@
 
 /* Main App  - Call in main */
 
+extern uint64_t uwTickMicroseconds;
+
+static inline uint64_t GetTickMicroseconds(){
+	return uwTickMicroseconds;
+}
 
 /* Declare Global Thread Start C-Compatible Functions - for portability */
 

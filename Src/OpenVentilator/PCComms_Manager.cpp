@@ -53,10 +53,8 @@ public:
      tx_dma_buffer(buf, len);
      tx_dma_buffer((uint8_t*)"\n", 1);
   #endif
-
 		memcpy(incoming_str.buf, buf, len);
 		incoming_str.len = len;
-
 	}
 
 private:
@@ -71,7 +69,7 @@ class PCCommsManager: public OVThread {
 public:
 	PCCommsManager() :
 			OVThread("PC Communications", 2056, pc_comms_m_priority, 100),
-//			VComUART(incoming_rx_stream),
+			/* std::bind is required to attach non-static callback functions to constructor, this may not be needed, I could as well have static functions */
 			user_input_offboard_pub(gUserInputOffboardOVQHandle), operation_status_sub(
 					gOperationStatusOVQHandle,
 					std::bind(&PCCommsManager::on_operation_status_peek, this,

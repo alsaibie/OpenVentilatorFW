@@ -30,7 +30,7 @@ void StartOpenVentilator() {
     start_controller_manager();
     start_sensor_manager();
     start_ui_manager();
-//    start_actuator_manager();
+    start_actuator_manager();
     start_emulator_manager();
     start_system_monitor();
 
