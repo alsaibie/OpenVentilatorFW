@@ -6,17 +6,17 @@
 namespace OVTopics {
 
 enum class OperationState_Modes {
-  DISARMED = 0,
-  READY,
-  RUNNING,
-  RUNNING_W_WARNING,
-
-  NUM_OPERATION_STATES
+  Disarmed = 0,
+  Ready,
+  Running,
+  Running_Warning,
+  Calibrating,
+  Num_Operating_States
 
 };
 
 typedef struct : public _msgCore {
-  OperationState_Modes operation_state { OperationState_Modes::DISARMED };
+  OperationState_Modes operation_state { OperationState_Modes::Disarmed };
   UI::UserInputSource input_source { UI::UserInputSource::Offboard };
 } OperationStatus_msg_t;
 

@@ -58,7 +58,7 @@ class SafetyManager : public OVThread {
 
   void on_operation_status_read(
       const OVTopics::OperationStatus_msg_t &msg) {
-    if (msg.operation_state == OperationState_Modes::DISARMED) {
+    if (msg.operation_state == OperationState_Modes::Disarmed) {
       // Serial.println("System Disarmed");
     }
   }

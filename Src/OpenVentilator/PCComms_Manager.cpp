@@ -24,9 +24,9 @@ using namespace OVTopics;
 SemaphoreHandle_t xDebugPrintSemaphore = NULL;
 
 typedef struct _STREAM {
-  static size_t const buffer_size{200};
+  static size_t const buffer_size { 200 };
   char buf[buffer_size];
-  size_t len{200};
+  size_t len { 200 };
 } STREAM;
 
 #define UART_DEBUG_TX_STREAM_LENGTH 15
@@ -35,7 +35,7 @@ STREAM UART_DEBUG_TX_STREAM[UART_DEBUG_TX_STREAM_LENGTH];
 int16_t uart_debug_tx_stream_idx = -1;
 
 //#define clear_stream(stream) {(stream).buf = NULL; (stream).len = 0;}
-void clear_stream(STREAM &stream){
+void clear_stream(STREAM &stream) {
   memset(stream.buf, 0, stream.len);
   stream.len = 0;
 }
@@ -59,10 +59,10 @@ class VCUART : public UART {
      tx_dma_buffer(buf, len);
      tx_dma_buffer((uint8_t*)"\n", 1);
  #endif
-     for (int k = 0; k < len; k++){
-       incoming_str.buf[k] = (char)buf[k];
-       //Need to copy so original is cleared immediatly
-     }
+    for (int k = 0; k < len; k++) {
+      incoming_str.buf[k] = (char) buf[k];
+      //Need to copy so original is cleared immediatly
+    }
     incoming_str.len = len;
   }
 
@@ -74,7 +74,7 @@ class VCUART : public UART {
 class PCCommsManager : public OVThread {
  public:
   PCCommsManager() :
-      OVThread("PC Communications", 2056, pc_comms_m_priority, 100),
+      OVThread("PC Communications", 1024, pc_comms_m_priority, 100),
       /* std::bind is required to attach non-static callback functions to constructor, this may not be needed, I could as well have static functions */
       user_input_offboard_pub(gUserInputOffboardOVQHandle),
       operation_status_sub(
@@ -112,34 +112,62 @@ class PCCommsManager : public OVThread {
       system_status_sub.receive();
       user_input_sub.receive();
 
+      ui_ob_msg.clear(); /* clear non-persistent values */
+
       /* Receive Commands from PC */
       if (incoming_rx_stream.len != 0) {
         /* Process new line TODO: make a stream array to handle a backlog */
-        const size_t capacity = JSON_OBJECT_SIZE(5);
+        const size_t capacity = JSON_OBJECT_SIZE(6);
         StaticJsonDocument<capacity> doc;
 
         deserializeJson(doc, incoming_rx_stream.buf);
 
         /* Relay to OVTopic */
-        ui_ob_msg.flow_sp_lpm = doc["val"];
-        if(int(doc["val"])!=0){
+        if (!doc["fC"].isNull()) {
+          /* Float Value Commands */
+          if (doc["fC"] == "FreqSp") {
+            ui_ob_msg.rate_sp_hz = doc["val"];
+          } else if (doc["fC"] == "IESp") {
+            ui_ob_msg.IE_ratio = doc["val"];
+          } else if (doc["fC"] == "FlowSp") {
+            ui_ob_msg.flow_sp_lpm = doc["val"];
+          }
           HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-          ui_ob_msg.rate_sp_hz = 10;
         }
-//        ui_ob_msg.flow_sp_lpm = doc["flow_lpm"];
 
-        ui_ob_msg.IE_ratio = doc["ie_ratio"];
+        else if (!doc["mC"].isNull()){
+          /* Mode Command */
+          if(doc["mC"] == "SysMode"){
+            ui_ob_msg.system_mode =
+                            static_cast<UI::UserSystem_Modes>(static_cast<int>(doc["mode"]));
+          }
+          HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        }
 
-        ui_ob_msg.system_mode =
-            static_cast<UI::UserSystem_Modes>(static_cast<int>(doc["system_mode"]));
+        else if (!doc["iC"].isNull()){
+          /* Integer Value */
+        }
 
-        if(user_input_offboard_pub.publish(ui_ob_msg) != pdPASS){
-          /* why? */
-          int a = 1;
+        else if (!doc["bC"].isNull()){
+          /* Binary Value Command */
+          if(doc["bC"] == "Pause"){
+            ui_ob_msg.Pause = doc["state"];
+          } else if(doc["bC"] == "ESTOP"){
+             ui_ob_msg.ESTOP = doc["state"];
+          } else if(doc["bC"] == "MCalibrate"){
+            ui_ob_msg.MotionCalibrate = doc["state"];
+          }
+        }
+
+        else if(!doc["pC"].isNull()){
+          /* Paramaters - Future Placement for updating parameters */
+
+        }
+
+        if (user_input_offboard_pub.publish(ui_ob_msg) != pdPASS) {/* Error */
         }
 
         clear_stream(incoming_rx_stream);
-
       }
 
 #ifdef DEBUG_PRINT
@@ -153,7 +181,6 @@ class PCCommsManager : public OVThread {
  private:
   VCUART VComUART;
   static STREAM incoming_rx_stream;
-
 
   void tx_debug_messages() {
     if (xSemaphoreTake(xDebugPrintSemaphore, (TickType_t) 10) == pdTRUE) {

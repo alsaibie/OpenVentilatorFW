@@ -13,7 +13,7 @@ using namespace OVRTOS;
 using namespace OVTopics;
 
 /* Default Modes */
-#define DEFAULT_OPERATION_STATE OperationState_Modes::DISARMED
+#define DEFAULT_OPERATION_STATE OperationState_Modes::Disarmed
 
 class MasterManager : public OVThread {
  public:
