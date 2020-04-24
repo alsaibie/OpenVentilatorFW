@@ -26,6 +26,7 @@ def check_usb_available():
         warnings.warn("More than one USB Port Found, please specify port name")
     else:
         usb_com_port = usb_ports[0]
+    usb_com_port = 'COM8'
     
     return usb_com_port
 
@@ -53,10 +54,15 @@ class CommTask(QObject):
         while True:
             if self.connected:
                 # Read Line, decode and emit
-                line = self.mcu_serial.readline().decode('utf-8')
-                print(line)
-                self.process_msg(line)
-                self.isready_status.emit(True)
+                line = []
+                try:
+                    line = self.mcu_serial.readline().decode('utf-8')
+                except :
+                    print("Error reading new serial line")
+                if line:
+                    print(line)
+                    self.process_msg(line)
+                    self.isready_status.emit(True)
                 # line = "New Msg"
                 # time.sleep(0.05)
 
@@ -67,19 +73,21 @@ class CommTask(QObject):
                 time.sleep(0.5)
 
     def process_msg(self, json_line):
-        json_doc = json.loads(json_line)
-        print(json_doc["T"])
-        if(json_doc["S"] == "SystemStatus"):
-            # print(type(json_doc['P']))
-            self.update_plot.emit(json_doc["T"]/1000,json_doc['P'][0],"Pressure")
-        # self.newline_signal.emit(json_doc)
-        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow1")
-        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow2")
-        # self.update_plot.emit(json_doc["T"]/1000,json_doc["RateSp"],"Volume")
-        # self.update_plot.emit(json_doc["T"]/1000,json_doc["IESp"],"Pressure")
-        # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"PEEP")
-
-
+        try:
+            json_doc = json.loads(json_line)
+            if(json_doc["S"] == "SystemStatus"):
+                # print(type(json_doc['P']))
+                # self.newline_signal.emit(json_doc)
+                self.update_plot.emit(json_doc["T"]/1000,json_doc['P'][0],"Pressure")
+                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow1")
+                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow2")
+                # self.update_plot.emit(json_doc["T"]/1000,json_doc["RateSp"],"Volume")
+                # self.update_plot.emit(json_doc["T"]/1000,json_doc["IESp"],"Pressure")
+                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"PEEP")
+        except:
+            print("Invalid JSON string")       
+            # print(json_line)
+        
 class PYGUI(QObject):
     connection_status = pyqtSignal(bool)
 
@@ -107,11 +115,11 @@ class PYGUI(QObject):
                 self.comm_task.mcu_serial.flushInput()
                 # self.comm_task.mcu_serial.flushOutput()
                 time.sleep(0.1)
-                self.comm_task.mcu_serial.read(5) # Read first line as well
-                print("readbytes")
-                self.comm_task.mcu_serial.readline() # Read first line as well
-                self.comm_task.mcu_serial.readline() # Read first line as well
-                self.comm_task.mcu_serial.readline() # Read first line as well
+                # self.comm_task.mcu_serial.read(5) # Read first line as well
+                # print("readbytes")
+                # self.comm_task.mcu_serial.readline() # Read first line as well
+                # self.comm_task.mcu_serial.readline() # Read first line as well
+                # self.comm_task.mcu_serial.readline() # Read first line as well
                 self.comm_task.connected = True
                 self.connection_status.emit(True)
             else :
@@ -128,15 +136,34 @@ class PYGUI(QObject):
 
     @pyqtSlot(str, bool)
     def sendBinaryCommand(self, which, state):
-        print(which + " " + str(state))
+        if self.comm_task.connected:
+            json_msg = {"C" : which, "val": val}
+            line_msg = json.dumps(json_msg) 
+            self.comm_task.mcu_serial.write(line_msg)
+            print(json_msg)
 
     @pyqtSlot(str, int)
     def sendIntegerCommand(self, which, val):
-        print(which + " " + str(val))
+        if self.comm_task.connected:
+            json_msg = {"C" : which, "val": val}
+            line_msg = json.dumps(json_msg) 
+            self.comm_task.mcu_serial.write(line_msg)
+            print(json_msg)
 
     @pyqtSlot(str, float)
     def sendFloatCommand(self, which, val):
-        print(which + " " + str(val))
+        if self.comm_task.connected:
+            json_msg = {} 
+            json_msg["C"] = which
+            json_msg["val"] = val
+            line_msg = json.dumps(json_msg) + '\n'
+            print(line_msg.encode('utf-8'))
+            self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
+            # self.comm_task.mcu_serial.write(("Testin123456789ABCDEFGHIJKLMNOPQRSTUVWXYZNOWIKNOWMYABCLETSGOOUTANDPLAYWITHME\n").encode('utf-8'))
+
+
+            self.comm_task.mcu_serial.flushOutput()
+
 
     @pyqtSlot()
     def test(self):

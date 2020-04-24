@@ -127,6 +127,28 @@ ApplicationWindow {
                             ToolTip.visible: hovered
                             ToolTip.delay: 500
                             ToolTip.text: pressureSlider.first.value.toFixed(2) + ' : ' + pressureSlider.second.value.toFixed(2)
+                            
+                        }
+
+                        Label{
+                            text: "PositionTest: " + sliderOne.value.toFixed(0)
+                            Layout.fillWidth : true 
+                            anchors.bottom : sliderOne.top
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Material.accent
+                        }
+
+                        Slider {
+                            id: sliderOne
+                            from: -800
+                            to: 800
+                            stepSize: 1
+                            value: 0
+                            Layout.fillWidth: true
+                            ToolTip.visible : hovered
+                            ToolTip.delay: 500
+                            ToolTip.text : sliderOne.value.toFixed(2)
+                            onValueChanged: pygui.sendFloatCommand("PosSp", sliderOne.value.toFixed(0))
                         }
                         Label {
                             text: "Frequency"
@@ -150,7 +172,8 @@ ApplicationWindow {
                                 verticalAlignment: Text.AlignVCenter
                                 opacity: 0.7
                             }
-                            onValueChanged: pygui.sendFloatCommand("FrequencySP", frequencyDial.value)
+                            
+                            onValueChanged: pygui.sendFloatCommand("FreqSp", frequencyDial.value.toFixed(0))
                         }
                     }
                 }
