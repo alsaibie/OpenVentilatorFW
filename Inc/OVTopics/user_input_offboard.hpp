@@ -7,11 +7,11 @@
  */
 namespace OVTopics {
 
-typedef struct {
-    uint32_t rate_sp_hz;
-    uint32_t flow_sp_lpm;
-    uint32_t IE_ratio;
-    UI::UserSystem_Modes system_mode;
+typedef struct : public _msgCore{
+  uint32_t rate_sp_hz { 0 };
+  float flow_sp_lpm { 0 };
+  uint32_t IE_ratio { 0 };
+  UI::UserSystem_Modes system_mode { UI::UserSystem_Modes::Manual_Mode };
 } UserInputOffboard_msg_t;
 
 }  // namespace OVTopics

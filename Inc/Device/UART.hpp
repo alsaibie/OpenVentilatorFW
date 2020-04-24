@@ -24,11 +24,12 @@ class UART {
 
   /* Synchronous call to check for new char in dma buffer  */
   void spin_circular();
+  void spin_circular2();
 
   /* Print Methods */
   ssize_t print(const char *buf, size_t len);
 
-  ssize_t print(const char *buf);
+  size_t print(const char *buf);
 
   ssize_t print(const std::string &s);
 
@@ -53,9 +54,9 @@ class UART {
 
 
  private:
-
-  static const uint_least8_t UART_RX_BUFFER_SIZE = 128;
-  static const uint_least8_t UART_TX_BUFFER_SIZE = 128;
+  void process(const void* data, size_t len);
+  static const uint_least16_t UART_RX_BUFFER_SIZE = 255;
+  static const uint_least16_t UART_TX_BUFFER_SIZE = 255;
 
   uint8_t dma_rx_buffer[UART_RX_BUFFER_SIZE];
 

@@ -4,124 +4,154 @@
 #include <vector>
 #include "FreeRTOS.h"
 #include "queue.h"
-
 #include <functional>
+#include "OVTopics/common_types.hpp"
+#include "stm32f4xx_hal.h"
 
 namespace OVRTOS {
 
-typedef enum { Receive = 0, Peek } OVQReadMode;
+typedef enum {
+  Receive = 0,
+  Peek
+} OVQReadMode;
 
 typedef struct {
-    QueueHandle_t handle = NULL;
-    const char *name;
-    uint32_t length;
+  QueueHandle_t handle = NULL;
+  const char *name;
+  uint32_t length;
 } OVQueueHandle_t;
 
 class OVQueueBase {
-   public:
-    inline const char *get_name() { return ovqh.name; }
+ public:
+  inline const char* get_name() {
+    return ovqh.name;
+  }
 
-    inline QueueHandle_t get_handle() { return ovqh.handle; }
+  inline QueueHandle_t get_handle() {
+    return ovqh.handle;
+  }
 
-    static std::vector<OVQueueHandle_t *> ptrOVQH;
+  static std::vector<OVQueueHandle_t*> ptrOVQH;
 
-   protected:
-    OVQueueBase(OVQueueHandle_t &qh, size_t msg_size) : ovqh(qh) {
-        if (ovqh.handle == NULL) {
-            /* Create Queue if not created */
-            ovqh.handle = xQueueCreate(ovqh.length, msg_size);
-            ptrOVQH.push_back(&ovqh);
-        }
+ protected:
+  OVQueueBase(OVQueueHandle_t &qh, size_t msg_size) :
+      ovqh(qh) {
+    if (ovqh.handle == NULL) {
+      /* Create Queue if not created */
+      ovqh.handle = xQueueCreate(ovqh.length, msg_size);
+      ptrOVQH.push_back(&ovqh);
     }
+  }
 
-    OVQueueHandle_t &ovqh;
+  OVQueueHandle_t &ovqh;
 };
 
-template <typename OVQueuemsgT> /* Queue Data Type */
+template<typename OVQueuemsgT> /* Queue Data Type */
 class OVQueuePublisher : public OVQueueBase {
-   public:
-    OVQueuePublisher(OVQueueHandle_t &qh) : OVQueueBase(qh, sizeof(OVQueuemsgT)) {}
+ public:
+  OVQueuePublisher(OVQueueHandle_t &qh) :
+      OVQueueBase(qh, sizeof(OVQueuemsgT)) {
+  }
 
-    inline uint32_t publish(OVQueuemsgT &msg) {
+  inline uint32_t publish(OVQueuemsgT &msg) {
 //        if (xQueueSendToBack(ovqh.handle, &msg, (TickType_t)2) == pdTRUE) {
-        	if (xQueueOverwrite(ovqh.handle, &msg) == pdTRUE) {	// TODO: create a seperate multi-publisher object
-        	/* Save a copy for peeking */
-            return pdPASS;
-        } else {
-            return pdFAIL;
-        }
+    OVTopics::_msgCore *msgCore = static_cast<OVTopics::_msgCore*>(&msg);
+    msgCore->msg_count++;
+    msgCore->tick_stamp = HAL_GetTick();
+    if (xQueueOverwrite(ovqh.handle, &msg) == pdTRUE) {  // TODO: create a seperate multi-publisher object
+      /* Save a copy for peeking */
+      return pdPASS;
+    } else {
+      return pdFAIL;
     }
+  }
 
-   private:
-    OVQueuemsgT msg;
+ private:
+  OVQueuemsgT msg;
 };
 
-template <typename OVQueuemsgT>
+template<typename OVQueuemsgT>
 class OVQueueSubscriber : public OVQueueBase {
-    typedef void (*callbackT)(const OVQueuemsgT &);
+  typedef std::function<void(const OVQueuemsgT&)> callbackT;
+ public:
+  OVQueueSubscriber(OVQueueHandle_t &qh, callbackT cb_) :
+      OVQueueBase(qh, sizeof(OVQueuemsgT)),
+      cb(cb_),
+      previous_tick_stamp(0),
+      previous_msg_count(0) {
+  }
 
-   public:
-    OVQueueSubscriber(OVQueueHandle_t &qh, callbackT cb_, OVQReadMode mode)
-        : OVQueueBase(qh, sizeof(OVQueuemsgT)), cb(cb_), read_mode(mode) {}
-
-    inline uint32_t receive() {
-        if (read_mode == Receive) {
-            if (xQueueReceive(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
-                cb(msg);
-                return pdPASS;
-            } else {
-                return pdFAIL;
-            }
-        } else if (read_mode == Peek) {
-            if (xQueuePeek(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
-                cb(msg);
-                return pdPASS;
-            } else {
-                return pdFAIL;
-            }
-        } else {
-            return pdFAIL;
-        }
+  inline uint32_t peek() {
+    if (xQueuePeek(ovqh.handle, &msg, (TickType_t) 10) == pdPASS) {
+      cb(msg);
+      return pdPASS;
+    } else {
+      return pdFAIL;
     }
+  }
 
-   private:
-    OVQueuemsgT msg;
-    callbackT cb;
-    OVQReadMode read_mode;
+  inline uint32_t receive() {
+    if (xQueuePeek(ovqh.handle, &msg, (TickType_t) 10) == pdPASS) {
+      OVTopics::_msgCore *msgCore = static_cast<OVTopics::_msgCore*>(&msg);
+      previous_tick_stamp = msgCore->tick_stamp;
+      if (msgCore->msg_count > previous_msg_count) {
+        previous_msg_count = msgCore->msg_count;
+        cb(msg);
+        return pdPASS;
+      } else {
+        return pdFAIL;
+      }
+    } else {
+      return pdFAIL;
+    }
+  }
+
+ private:
+  OVQueuemsgT msg;
+  callbackT cb;
+  uint32_t previous_tick_stamp;
+  uint32_t previous_msg_count;
 };
 
-template <typename OVQueuemsgT>
-class OVQueueSubscriber2 : public OVQueueBase {
-//    typedef void (*callbackT)(const OVQueuemsgT &);
-	typedef std::function<void(const OVQueuemsgT &)> callbackT;
-   public:
-    OVQueueSubscriber2(OVQueueHandle_t &qh, callbackT cb_, OVQReadMode mode)
-        : OVQueueBase(qh, sizeof(OVQueuemsgT)), cb(cb_), read_mode(mode) {}
+template<typename OVQueuemsgT>
+class OVQueueSubscriberDep : public OVQueueBase {
+  typedef void (*callbackT)(const OVQueuemsgT&);
 
-    inline uint32_t receive() {
-        if (read_mode == Receive) {
-            if (xQueueReceive(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
-                cb(msg);
-                return pdPASS;
-            } else {
-                return pdFAIL;
-            }
-        } else if (read_mode == Peek) {
-            if (xQueuePeek(ovqh.handle, &msg, (TickType_t)10) == pdPASS) {
-                cb(msg);
-                return pdPASS;
-            } else {
-                return pdFAIL;
-            }
-        } else {
-            return pdFAIL;
-        }
+ public:
+  OVQueueSubscriberDep(OVQueueHandle_t &qh, callbackT cb_, OVQReadMode mode) :
+      OVQueueBase(qh, sizeof(OVQueuemsgT)),
+      cb(cb_),
+      read_mode(mode),
+      previous_tick_stamp(0),
+      previous_msg_count(0) {
+  }
+
+  inline uint32_t receive() {
+    if (read_mode == Receive) {
+      if (xQueueReceive(ovqh.handle, &msg, (TickType_t) 10) == pdPASS) {
+        cb(msg);
+        return pdPASS;
+      } else {
+        return pdFAIL;
+      }
+    } else if (read_mode == Peek) {
+      if (xQueuePeek(ovqh.handle, &msg, (TickType_t) 10) == pdPASS) {
+        cb(msg);
+        return pdPASS;
+      } else {
+        return pdFAIL;
+      }
+    } else {
+      return pdFAIL;
     }
+  }
 
-   private:
-    OVQueuemsgT msg;
-    callbackT cb;
-    OVQReadMode read_mode;
+ private:
+  OVQueuemsgT msg;
+  callbackT cb;
+  OVQReadMode read_mode;
+  uint32_t previous_tick_stamp;
+  uint32_t previous_msg_count;
 };
 
 }  // namespace OVRTOS

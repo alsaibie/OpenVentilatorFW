@@ -8,6 +8,7 @@
 #include "OVTopics/sensor_status.hpp"
 #include "OVTopics/system_status.hpp"
 #include "OVTopics/user_input.hpp"
+#include "OVTopics/user_input_offboard.hpp"
 
 std::vector<OVRTOS::OVQueueHandle_t *> OVRTOS::OVQueueBase::ptrOVQH;
 

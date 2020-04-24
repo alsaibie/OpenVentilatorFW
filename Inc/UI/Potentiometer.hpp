@@ -15,13 +15,14 @@ class Potentionmeter {
 
     inline void spinSampler(uint32_t dt){
         //TODO: Add sampler and filter
-
-
+      static int deadband = 10;
+      next_input = getSample();
+      if (abs(next_input-previous_input) <  deadband){
+        return;
+      }
+      output_value = 0.632 * previous_input + 0.368 * previous_output;
     	previous_input = next_input;
-    	next_input = getSample() / 1.32;
     	previous_output = output_value;
-      	output_value =  (next_input + previous_input) + (-0.51 * previous_output) ;
-
     };
 
 

@@ -16,76 +16,90 @@ using namespace OVTopics;
 #define DEFAULT_OPERATION_STATE OperationState_Modes::DISARMED
 
 class MasterManager : public OVThread {
-   public:
-    MasterManager()
-        : OVThread("Master Manager", 128, master_m_priority, 50),
-          system_status_pub(gSystemStatusOVQHandle),
-          operation_status_pub(gOperationStatusOVQHandle),
-          safety_sub(gSafetyOVQHandle, &on_safety_peek, Peek),
-          user_input_sub(gUserInputOVQHandle, &on_user_input_peek, Peek),
-          sensor_status_sub(gSensorStatusOVQHandle, &on_sensor_status_peek, Peek),
-          operation_state(DEFAULT_OPERATION_STATE),SysStatusMsg{0}
-           {}
+ public:
+  MasterManager() :
+      OVThread("Master Manager", 128, master_m_priority, 50),
+      system_status_pub(gSystemStatusOVQHandle),
+      operation_status_pub(gOperationStatusOVQHandle),
+      safety_sub(
+          gSafetyOVQHandle,
+          std::bind(&MasterManager::on_safety_read, this,
+                    std::placeholders::_1)),
+      user_input_sub(
+          gUserInputOVQHandle,
+          std::bind(&MasterManager::on_user_input_read, this,
+                    std::placeholders::_1)),
+      sensor_status_sub(
+          gSensorStatusOVQHandle,
+          std::bind(&MasterManager::on_sensor_status_read, this,
+                    std::placeholders::_1)),
+      operation_state(DEFAULT_OPERATION_STATE) {
+  }
 
-   protected:
-    virtual void run() {
-        while (1) {
-            safety_sub.receive();
-            user_input_sub.receive();
-            sensor_status_sub.receive();
-            
-            OpStatusMsg.operation_state = operation_state;
+ protected:
+  virtual void run() {
+    while (1) {
+      safety_sub.receive();
+      user_input_sub.receive();
+      sensor_status_sub.receive();
 
-            operation_status_pub.publish(OpStatusMsg);
+      OpStatusMsg.input_source = UI::UserInputSource::Onboard;
+      OpStatusMsg.operation_state = operation_state;
 
-            SysStatusMsg.Q.slpm = 10;
+      operation_status_pub.publish(OpStatusMsg);
 
-            system_status_pub.publish(SysStatusMsg);
+      SysStatusMsg.Q.slpm = 10;
 
-            thread_lap();
-        }
+      system_status_pub.publish(SysStatusMsg);
+
+      thread_lap();
+    }
+  }
+
+ private:
+  void update_system_state() {
+  }
+
+  void run_state_machine() {
+
+  }
+
+  void on_user_input_read(const OVTopics::UserInput_msg_t &msg) {
+    //TODO: check
+
+  }
+
+  // TODO: for safety and similar queues, a peek will not work, need to read, or ackowledge persistent messages..
+  void on_safety_read(const Safety_msg_t &msg) {
+    if (msg.system_error == SystemErrors_Modes::Actuator_Error) {
+
     }
 
-   private:
-    void update_system_state() {}
+  }
 
-    void run_state_machine() {
+  void on_sensor_status_read(const SensorStatus_msg_t &msg) {
 
-    }
+  }
 
-    static void on_user_input_peek(const OVTopics::UserInput_msg_t &msg) {
-    	//TODO: check
+  /* Pubs */
+  OVQueuePublisher<SystemStatus_msg_t> system_status_pub;
+  SystemStatus_msg_t SysStatusMsg;
+  OVQueuePublisher<OperationStatus_msg_t> operation_status_pub;
+  OperationStatus_msg_t OpStatusMsg;
 
-    }
+  /* Subs */
+  OVQueueSubscriber<Safety_msg_t> safety_sub;
+  Safety_msg_t safetyMsg;
+  OVQueueSubscriber<UserInput_msg_t> user_input_sub;
+  UserInput_msg_t userInputMsg;
+  OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
+  SensorStatus_msg_t sensorStatusMsg;
 
-    // TODO: for safety and similar queues, a peek will not work, need to read, or ackowledge persistent messages..
-    static void on_safety_peek(const Safety_msg_t &msg) {
-        if (msg.system_error == SystemErrors_Modes::ACTUATOR_ERROR) {
-
-        }
-
-    }
-
-    static void on_sensor_status_peek(const SensorStatus_msg_t &msg) {
-
-    }
-
-    /* Pubs */
-    OVQueuePublisher<SystemStatus_msg_t> system_status_pub;
-    SystemStatus_msg_t SysStatusMsg;
-    OVQueuePublisher<OperationStatus_msg_t> operation_status_pub;
-    OperationStatus_msg_t OpStatusMsg;
-
-    /* Subs */
-    OVQueueSubscriber<Safety_msg_t> safety_sub;
-    OVQueueSubscriber<UserInput_msg_t> user_input_sub;
-    OVQueueSubscriber<SensorStatus_msg_t> sensor_status_sub;
-
-    OperationState_Modes operation_state;
+  OperationState_Modes operation_state;
 };
 
 void start_master_manager() {
-    MasterManager *ptr = new MasterManager();
-    ptr->start();
+  MasterManager *ptr = new MasterManager();
+  ptr->start();
 }
 

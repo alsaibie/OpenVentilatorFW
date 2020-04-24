@@ -12,8 +12,6 @@ using namespace OVRTOS;
 using namespace OVTopics;
 
 
-#define DEFAULT_USER_MODE UserSystem_Modes::MANUAL_MODE
-
 // TODO: Map button functions for each operation mode and display interface:
 class UIManager : public OVThread {
    public:
@@ -26,9 +24,10 @@ class UIManager : public OVThread {
           pot2("Potentiometer 2", POT2_ADCPin),
           pot3("Potentiometer 3", POT3_ADCPin),
           user_input_pub(gUserInputOVQHandle),
-          system_status_sub(gSystemStatusOVQHandle, &on_system_status_peek, Peek),
-          operation_status_sub(gOperationStatusOVQHandle, &on_operation_status_peek, Peek){
-//          user_system_mode(UserSystem_Modes::MANUAL_MODE) {
+          system_status_sub(gSystemStatusOVQHandle, std::bind(&UIManager::on_system_status_read, this,
+                                                              std::placeholders::_1)),
+          operation_status_sub(gOperationStatusOVQHandle, std::bind(&UIManager::on_operation_status_read, this,
+                                                                    std::placeholders::_1)){
         params.ie_min = 0.5;
         params.ie_max = 3.0;
         params.flow_rate_lpm_max = 60;
@@ -65,24 +64,24 @@ class UIManager : public OVThread {
             char arr[10];
             itoa(pot2val, arr, 10);
             /* Translated to Commands */
-            OVTopics::UserInput_msg_t ui_msg;
+
 
             //TODO: a button press changes
 
-            ui_msg.system_mode = user_system_mode;
+            userInputMsg.system_mode = user_system_mode;
 
             /* Pot Inputs */
             uint32_t adc_range = (2 ^ 12);
 
-            ui_msg.flow_sp_lpm =
+            userInputMsg.flow_sp_lpm =
                 pot1val * (params.flow_rate_lpm_max - params.flow_rate_lpm_min) / adc_range + params.flow_rate_lpm_min;
-            ui_msg.rate_sp_hz =
+            userInputMsg.rate_sp_hz =
                 pot2val * (params.rate_hz_max - params.rate_hz_min) / adc_range + params.rate_hz_min;
-            ui_msg.IE_ratio = pot3val * (params.ie_max - params.ie_max) / adc_range + params.ie_min;
+            userInputMsg.IE_ratio = pot3val * (params.ie_max - params.ie_max) / adc_range + params.ie_min;
 
 
             /* Publish Commands */
-            user_input_pub.publish(ui_msg);
+            user_input_pub.publish(userInputMsg);
 
             /* Read Status & Display Updates in cb */
             system_status_sub.receive();
@@ -120,11 +119,11 @@ class UIManager : public OVThread {
 
     static void on_button_3_press(void) {}
 
-    static void on_system_status_peek(const OVTopics::SystemStatus_msg_t &msg) {
+    void on_system_status_read(const OVTopics::SystemStatus_msg_t &msg) {
     	/* Display on monitor */
     }
 
-    static void on_operation_status_peek(const OVTopics::OperationStatus_msg_t &msg) {
+    void on_operation_status_read(const OVTopics::OperationStatus_msg_t &msg) {
     	/* Display on monitor */
     }
 
@@ -138,11 +137,12 @@ class UIManager : public OVThread {
 
     /* Pubs */
     OVQueuePublisher<OVTopics::UserInput_msg_t> user_input_pub;
-
+    OVTopics::UserInput_msg_t userInputMsg;
     /* Subs */
     OVQueueSubscriber<OVTopics::SystemStatus_msg_t> system_status_sub;
-
+    SystemStatus_msg_t systemStatusMsg;
     OVQueueSubscriber<OVTopics::OperationStatus_msg_t> operation_status_sub;
+    OperationStatus_msg_t operationStatusMsg;
 };
 
 

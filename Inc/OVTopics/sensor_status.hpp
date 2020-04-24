@@ -4,9 +4,9 @@
 
 namespace OVTopics {
 
-typedef struct {
-    float Q_SLPM;
-    float P_mmH2O;
+typedef struct : public _msgCore {
+  float Q_SLPM { 0 };
+  float P_mmH2O { 0 };
 } SensorStatus_msg_t;
 
 }  // namespace OVTopics

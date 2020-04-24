@@ -2,68 +2,86 @@
 #define STEPPER_HPP_
 
 #include "stm32f4xx_hal.h"
+#include "Device/common.h"
 #include "math.h"
-namespace Actuators {
-typedef struct {
-    uint32_t enable_pin;
-    uint32_t dir_pin;
-    uint32_t step_pin;
-} StepperPinConfig_t;
 
-typedef enum { Reverse = 0, Forward } MotorDirection_t;
+namespace Actuators {
+
+typedef struct {
+	int32_t acc; // steps/s^2
+	int32_t v_cruise; // steps/s
+	int32_t v_min_start; // step/s
+	int32_t v_min_stop; // step/s can theoretically go to a lower speed with initial w
+	uint32_t steps_per_rev;
+} StepperConfig_t;
+
+typedef struct {
+	GPIOPinCombo_t pwm;
+	GPIOPinCombo_t dir;
+	GPIOPinCombo_t en;
+	GPIOPinCombo_t ms1;
+	GPIOPinCombo_t ms2;
+	GPIOPinCombo_t ms3;
+}StepperPinsConfig_t;
+
+enum class MotionState_t {IDLE = 0, ACCELERATE, CRUISE, DECELERATE};
+enum class MotorDirection_t { Reverse = 0, Forward } ;
 
 class Stepper {
    public:
-    Stepper(const char *name, StepperPinConfig_t &p_cfg)
-        : pin_config(p_cfg), direction(Forward), last_micros(0), step_time_period(1), number_of_steps(4), step_num(0),
-        position_est(0), velocity_est(0), acceleration_est(0) {
-
+    Stepper(const char *name, StepperConfig_t &m_cfg, StepperPinsConfig_t &p_cfg, TIM_HandleTypeDef &pwm_tim, uint32_t pwm_ch, TIM_OC_InitTypeDef & tim_ch_cfg, uint32_t timer_r)
+        : param(m_cfg), pins(p_cfg), pwm_timer(pwm_tim), pwm_channel(pwm_ch), pwm_tim_ch_cfg(tim_ch_cfg), timer_rate(timer_r),
+		  step_next(0), steps_togo(0), step_postion(0), velocity_est(0), acceleration_est(0),
+		  Tus(-1),  motion_state(MotionState_t::IDLE), running(false){
     }
 
-    /* RPM -> time period in micros */
-    inline void setSpeed(uint32_t &speed) { step_time_period = 60L * 1000000L / number_of_steps / speed; }
-
-    inline void enableMotor() { digitalWrite(pin_config.enable_pin, HIGH); }
-    inline void disableMotor() { digitalWrite(pin_config.enable_pin, LOW); }
-
-    inline int32_t getEstPosition(){}
-    inline int32_t getEstVelocity(){}
-    inline int32_t getEstAcceleration(){}
-
-    inline void stepMotor(int32_t steps) {
-        uint32_t steps_remaining = abs(steps);
-        direction = steps > 0 ? Forward : Reverse;
-        while (steps_remaining) {
-            uint32_t micros_now = HAL_GetTick();
-            if (micros_now - last_micros >= step_time_period) {
-                last_micros = micros_now;
-                if (direction == Forward) {
-                    step_num = (step_num == number_of_steps) ? 0 : step_num + 1;
-                } else if (direction == Reverse) {
-                    step_num = (step_num == 0) ? number_of_steps : step_num - 1;
-                }
-                doSteps(step_num);
-                steps_remaining--;
-            }
-        }
+    inline void updateParameters(StepperConfig_t &par){
+    	param = par;
     }
-    inline int32_t get_absolute_step(){}
-    inline void zero_absolute_step(){ absolute_step_postion = 0;}
+
+    inline void zeroAbsoluteStep(){ step_postion = 0;}
+
+    inline StepperConfig_t geParameters(){return param;}
+    inline void enableMotor() {
+    	HAL_GPIO_WritePin(pins.en.GPIOx, pins.en.pin, GPIO_PIN_RESET);
+//    	HAL_TIM_MspPostInit(&pwm_timer);
+    }
+    inline void disableMotor() {
+    	HAL_GPIO_WritePin(pins.en.GPIOx, pins.en.pin, GPIO_PIN_SET);
+    	HAL_GPIO_DeInit(pins.pwm.GPIOx, pins.pwm.pin);
+    }
+
+    void moveSteps(int32_t steps);
+    void moveToStepPosition(int32_t step_pos);
+    void moveWithVelocity(int32_t vel);
+
+    /* Interrupt Call */
+    int32_t pulseUpdate();
+    int32_t pulseUpdateSimple();
+
+
    private:
-    inline void doSteps(uint32_t current_step) { /* Apply step sequence */
-        static const uint32_t sequence_set[4]{0b1010, 0b0110, 0b0101, 0b1001};
-        uint32_t sequence = sequence_set[current_step];
-        for (uint32_t k = 0; k < 4; k++) {
-        }
-    }
-    StepperPinConfig_t pin_config;
-    MotorDirection_t direction;
-    time_t last_micros;
-    time_t step_time_period;
-    uint32_t number_of_steps;
-    uint32_t step_num;
-    int32_t absolute_step_postion;
-    int32_t position_est, velocity_est, acceleration_est;
+
+    void updateSqwFrequency(uint32_t period_us);
+    StepperConfig_t &param;
+    StepperPinsConfig_t &pins;
+    TIM_HandleTypeDef &pwm_timer;
+    uint32_t pwm_channel;
+    TIM_OC_InitTypeDef &pwm_tim_ch_cfg;
+    uint32_t timer_rate; // = 1E5; //Hz TODO: make function of clock setting
+
+
+    inline int32_t getStepPosition(){ return step_postion;}
+    inline int32_t getEstVelocity(){ return velocity_est;}
+    inline int32_t getEstAcceleration(){ return acceleration_est;}
+
+    int32_t step_next, steps_togo;
+    int32_t step_postion;
+    int32_t velocity_est, acceleration_est;
+    int32_t Tus;
+    MotionState_t motion_state;
+
+    bool running;
 };
 }  // namespace Actuators
 #endif

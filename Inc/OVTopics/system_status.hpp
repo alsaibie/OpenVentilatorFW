@@ -4,31 +4,29 @@
 
 namespace OVTopics {
 
-typedef struct {
+typedef struct : public _msgCore {
+  struct {
+    float exp;
+    float average;
+    float max;
+    float min;
+  } P { 0 };
 
-    struct {
-        float exp;
-        float average;
-        float max;
-        float min;
-    }P;
+  struct {
+    float slpm;
 
-    struct {
-        float slpm;
+  } Q { 0 };
 
-    }Q;
+  struct {
+    float max;
+    float min;
+    float average;
+  } V { 0 };
 
-    struct {
-        float max;
-        float min;
-        float average;
-    }V;
+  struct {
+    uint32_t uptime { 0 };
+  } system;
 
-    struct{
-        uint32_t uptime;
-
-    }system;
-    
 } SystemStatus_msg_t;
 
 }  // namespace OVTopics

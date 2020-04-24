@@ -5,14 +5,15 @@
 
 namespace OVTopics {
 
-typedef struct {
+typedef struct : public _msgCore {
+
     struct LinearAxis_ {
-        uint32_t position;
-        uint32_t speed;
-        uint32_t torque;
+        int32_t position{0};
+        int32_t speed{0};
+        int32_t torque{0};
         Actuators::AxisTrajectory_t trajectory;
-        Actuators::Actuator_Modes mode;
-    } primaryAxis, secondaryAxis;
+        Actuators::Actuator_Modes mode{Actuators::Actuator_Modes::Position};
+    } primaryAxis;
 
 } ActuatorCommands_msg_t;
 

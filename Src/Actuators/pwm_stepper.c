@@ -14,13 +14,7 @@ int32_t x_next;
 extern TIM_HandleTypeDef htim4;
 TIM_OC_InitTypeDef sConfigOCtim4 = { 0 };
 
-typedef struct {
-	int32_t acc; // steps/s^2
-	int32_t v_cruise; // steps/s
-	int32_t v_min_start; // step/s
-	int32_t v_min_stop; // step/s can theoretically go to a lower speed with initial w
-	uint32_t steps_per_rev;
-} MotorParameter_t;
+
 
 static MotorParameter_t p;
 static bool running = false;
@@ -34,7 +28,6 @@ static void update_sqw_frequency(uint32_t period_us) {
 	if (period_us == 0) {
 		idle = true;
 		period_us = 1E3;
-//		HAL_GPIO_WritePin(M1EN_GPIO_Port, M1EN_Pin, GPIO_PIN_SET);
 		running = false;
 	}
 
@@ -51,12 +44,15 @@ static void update_sqw_frequency(uint32_t period_us) {
 	}
 
 	if (!idle) {
-//		HAL_GPIO_WritePin(M1EN_GPIO_Port, M1EN_Pin, GPIO_PIN_RESET);
 		HAL_TIM_MspPostInit(&htim4);
 	}
+
+	/* Note: To disengage motor, disable the M1EN pin (set High)
+	 *		HAL_GPIO_WritePin(M1EN_GPIO_Port, M1EN_Pin, GPIO_PIN_SET);
+	 * */
 }
 
-static int32_t motor_control_pulse_update_simple() {
+static int32_t motor_control_pulse_update_direct() {
 	static int32_t v = 200; // steps / s
 	static int32_t x_togo;
 
@@ -84,12 +80,12 @@ typedef enum {
 	IDLE = 0, ACCELERATE, CRUISE, DECELERATE
 } MOTION_STATE_T;
 
-static int32_t motor_control_pulse_update_switch() {
+static int32_t motor_control_pulse_update_smooth() {
 
 	static int32_t v_current = 0;
 	static int32_t Tus = -1;
 	static int32_t x_togo;
-	MOTION_STATE_T motion_state = IDLE;
+	static MOTION_STATE_T motion_state;
 
 	if (Tus == -1) {
 		Tus = 1E6 / p.v_min_start;
@@ -98,6 +94,17 @@ static int32_t motor_control_pulse_update_switch() {
 	x_togo = x_next - x_current;
 
 	int dirSign = x_togo > 0 ? 1 : -1;
+
+	/* Change direction on low speed */
+
+	if (x_togo != 0 && v_current == 0){
+		if (dirSign > 0){
+			HAL_GPIO_WritePin(M1DIR_GPIO_Port, M1DIR_Pin, GPIO_PIN_SET);
+		}
+		else{
+			HAL_GPIO_WritePin(M1DIR_GPIO_Port, M1DIR_Pin, GPIO_PIN_RESET);
+		}
+	}
 
 	if (x_togo == 0) {
 		motion_state = IDLE;
@@ -118,6 +125,7 @@ static int32_t motor_control_pulse_update_switch() {
 
 	if (motion_state == IDLE) {
 		v_next = 0;
+
 	} else if (motion_state == CRUISE) {
 		v_next = dirSign * p.v_cruise;
 	} else if (motion_state == ACCELERATE) {
@@ -227,11 +235,9 @@ void goto_position(int32_t steps) {
 	}
 }
 
-void update_motor_parameters() {
-	p.acc = 800;
-	p.v_cruise = 400 ;
-	p.v_min_start = 150;
-	p.v_min_stop = 150;
+void update_motor_parameters(MotorParameter_t par) {
+	p = par;
+
 }
 
 void move_steps(int32_t steps) {
@@ -239,12 +245,12 @@ void move_steps(int32_t steps) {
 	x_next += steps;
 	if (!running) {
 		running = true;
-		motor_control_pulse_update_switch();
+		motor_control_pulse_update_smooth();
 	}
 }
 
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
-	if (htim->Instance == TIM4) {
-		motor_control_pulse_update_switch();
-	}
-}
+//void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+//	if (htim->Instance == TIM4) {
+//		motor_control_pulse_update_smooth();
+//	}
+//}
