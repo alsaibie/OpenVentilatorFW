@@ -135,31 +135,31 @@ class PCCommsManager : public OVThread {
           HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
         }
 
-        else if (!doc["mC"].isNull()){
+        else if (!doc["mC"].isNull()) {
           /* Mode Command */
-          if(doc["mC"] == "SysMode"){
+          if (doc["mC"] == "SysMode") {
             ui_ob_msg.system_mode =
-                            static_cast<UI::UserSystem_Modes>(static_cast<int>(doc["mode"]));
+                static_cast<UI::UserSystem_Modes>(static_cast<int>(doc["mode"]));
           }
           HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
         }
 
-        else if (!doc["iC"].isNull()){
+        else if (!doc["iC"].isNull()) {
           /* Integer Value */
         }
 
-        else if (!doc["bC"].isNull()){
+        else if (!doc["bC"].isNull()) {
           /* Binary Value Command */
-          if(doc["bC"] == "Pause"){
+          if (doc["bC"] == "Pause") {
             ui_ob_msg.Pause = doc["state"];
-          } else if(doc["bC"] == "ESTOP"){
-             ui_ob_msg.ESTOP = doc["state"];
-          } else if(doc["bC"] == "MCalibrate"){
+          } else if (doc["bC"] == "ESTOP") {
+            ui_ob_msg.ESTOP = doc["state"];
+          } else if (doc["bC"] == "MCalibrate") {
             ui_ob_msg.MotionCalibrate = doc["state"];
           }
         }
 
-        else if(!doc["pC"].isNull()){
+        else if (!doc["pC"].isNull()) {
           /* Paramaters - Future Placement for updating parameters */
 
         }
@@ -202,11 +202,12 @@ class PCCommsManager : public OVThread {
 
   void on_operation_status_read(const OperationStatus_msg_t &msg) {
     /* relay messages to PC */
-    const size_t capacity = JSON_OBJECT_SIZE(3);
+    const size_t capacity = JSON_OBJECT_SIZE(4);
     StaticJsonDocument<capacity> doc;
     doc["T"] = HAL_GetTick();
     doc["S"] = "OpStatus";
     doc["OpState"] = (int) msg.operation_state;
+    doc["OpMode"] = (int) msg.operation_mode;
     serializeJson(doc, VComUART);
     VComUART.EOL();
     vTaskDelay(10);

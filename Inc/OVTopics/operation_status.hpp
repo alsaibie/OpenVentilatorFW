@@ -12,12 +12,13 @@ enum class OperationState_Modes {
   Running_Warning,
   Calibrating,
   Num_Operating_States
-
 };
+
 
 typedef struct : public _msgCore {
   OperationState_Modes operation_state { OperationState_Modes::Disarmed };
   UI::UserInputSource input_source { UI::UserInputSource::Offboard };
+  UI::UserSystem_Modes operation_mode {UI::UserSystem_Modes::Manual_Mode};
 } OperationStatus_msg_t;
 
 }  // namespace OVTopics

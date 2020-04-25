@@ -37,9 +37,8 @@ namespace UI {
 enum class UserSystem_Modes {
   Manual_Mode = 1,
   Pressure_Control,
-  Volume_Control,
   Pressure_Assist,
-
+  Volume_Control,
   EndOfList
 };
 
