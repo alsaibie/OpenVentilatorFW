@@ -36,6 +36,18 @@ CellBox {
         }
     }
 
+    function flushPlots() {
+        console.log("flush")
+        flushPlot(series1Flow)
+        flushPlot(seriesVolume)
+    }
+
+    function flushPlot(series) {
+        if (series.amountOfData > 1) {
+            // series.remove(series.amountOfData)
+        }
+    }
+
     GridLayout {
         id: gL
         flow: GridLayout.TopToBottom
@@ -48,7 +60,7 @@ CellBox {
             SplineSeries {
                 id: seriesPressure
                 name: 'Pressure'
-                property int length_data: 50
+                property int length_data: 200
                 property int amountOfData: 0
                 width: 8
                 color: '#2196f3'
@@ -68,7 +80,7 @@ CellBox {
             title: 'Flow'
             SplineSeries {
                 name: 'Flow Rate 1'
-                property int length_data: 50
+                property int length_data: 200
                 property int amountOfData: 0
                 id: series1Flow
                 width: 8
@@ -85,7 +97,7 @@ CellBox {
             SplineSeries {
                 name: 'Flow Rate 2'
                 id: series2Flow
-                property int length_data: 50
+                property int length_data: 200
                 property int amountOfData: 0
                 width: 8
                 color: '#90caf9'
@@ -98,7 +110,7 @@ CellBox {
             SplineSeries {
                 id: seriesVolume
                 name: 'Volume'
-                property int length_data: 50
+                property int length_data: 200
                 property int amountOfData: 0
                 width: 8
                 color: '#2196f3'
@@ -119,7 +131,7 @@ CellBox {
             SplineSeries {
                 name: 'PEEP'
                 id: seriesPEEP
-                property int length_data: 50
+                property int length_data: 200
                 property int amountOfData: 0
                 width: 8
                 color: '#2196f3'

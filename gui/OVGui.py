@@ -35,20 +35,17 @@ def check_usb_available():
 class CommTask(QObject):
     def __init__(self, parent=None):
         QObject.__init__(self, parent)
+        self.connected = False
+        self.debugTest = False
+        self.mcu_serial = None
     # Background thread communicate with mcu and relay messages
     commend_signal = pyqtSignal()  # Notify GUI that comm port has closed
     newline_signal = pyqtSignal(str)  # Send new line to GUI
     isready_status = pyqtSignal(bool)
-
     # charts to update
     update_plot = pyqtSignal(float, float, str)
-
-    @pyqtSlot()
-    def __init__(self):
-        super(CommTask, self).__init__()
-        self.connected = False
-        self.debugTest = False
-        self.mcu_serial = None
+    update_values = pyqtSignal(float, str)
+    flush_plots = pyqtSignal()
 
     def run(self):
         while True:
@@ -60,7 +57,7 @@ class CommTask(QObject):
                 except :
                     print("Error reading new serial line")
                 if line:
-                    print(line)
+                    # print(line)
                     self.process_msg(line)
                     self.isready_status.emit(True)
                 # line = "New Msg"
@@ -76,14 +73,22 @@ class CommTask(QObject):
         try:
             json_doc = json.loads(json_line)
             if(json_doc["S"] == "SystemStatus"):
-                # print(type(json_doc['P']))
                 # self.newline_signal.emit(json_doc)
-                self.update_plot.emit(json_doc["T"]/1000,json_doc['P'][0],"Pressure")
-                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow1")
-                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"Flow2")
-                # self.update_plot.emit(json_doc["T"]/1000,json_doc["RateSp"],"Volume")
-                # self.update_plot.emit(json_doc["T"]/1000,json_doc["IESp"],"Pressure")
-                # self.update_plot.emit(json_doc["T"]/1000,json_doc["FlowSp"],"PEEP")
+                t = json_doc["T"]/1000
+                
+                self.update_values.emit(t, "uptime")
+
+                self.update_plot.emit(t,json_doc['P'][0],"Pressure")
+                self.update_values.emit(json_doc['P'][0], "minPressure")
+                self.update_values.emit(json_doc['P'][2], "maxPressure")
+
+                self.update_plot.emit(t, json_doc['V'][0], "Volume" )
+                self.update_values.emit(json_doc['V'][0], "volume")
+                
+            if(json_doc["S"] == "OpStatus"):
+                self.update_values.emit(json_doc['OpMode'], "opMode")
+                self.update_values.emit(json_doc['OpState'], "opState")
+
         except:
             print("Invalid JSON string")       
             # print(json_line)
@@ -120,8 +125,11 @@ class PYGUI(QObject):
                 # self.comm_task.mcu_serial.readline() # Read first line as well
                 # self.comm_task.mcu_serial.readline() # Read first line as well
                 # self.comm_task.mcu_serial.readline() # Read first line as well
+                self.comm_task.flush_plots.emit()
+                time.sleep(0.2)
                 self.comm_task.connected = True
                 self.connection_status.emit(True)
+
             else :
                 print("Error Connecting to " + available_port + " Port")
 
@@ -137,82 +145,62 @@ class PYGUI(QObject):
     @pyqtSlot(str, bool)
     def sendBinaryCommand(self, which, state):
         if self.comm_task.connected:
-            json_msg = {"C" : which, "val": val}
-            line_msg = json.dumps(json_msg) 
-            self.comm_task.mcu_serial.write(line_msg)
-            print(json_msg)
+            json_msg = {} 
+            json_msg["bC"] = which
+            json_msg["state"] = state
+            line_msg = json.dumps(json_msg) + '\n'
+            self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
+            self.comm_task.mcu_serial.flushOutput()
+
+    @pyqtSlot(str, bool)
+    def sendModeCommand(self, which, mode):
+        if self.comm_task.connected:
+            json_msg = {} 
+            json_msg["mC"] = which
+            json_msg["mode"] = mode
+            line_msg = json.dumps(json_msg) + '\n'
+            self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
+            self.comm_task.mcu_serial.flushOutput()
 
     @pyqtSlot(str, int)
     def sendIntegerCommand(self, which, val):
         if self.comm_task.connected:
-            json_msg = {"C" : which, "val": val}
-            line_msg = json.dumps(json_msg) 
-            self.comm_task.mcu_serial.write(line_msg)
-            print(json_msg)
+            json_msg = {} 
+            json_msg["iC"] = which
+            json_msg["val"] = int(val)
+            line_msg = json.dumps(json_msg) + '\n'
+            self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
+            self.comm_task.mcu_serial.flushOutput()
 
     @pyqtSlot(str, float)
     def sendFloatCommand(self, which, val):
         if self.comm_task.connected:
             json_msg = {} 
-            json_msg["C"] = which
+            json_msg["fC"] = which
             json_msg["val"] = val
             line_msg = json.dumps(json_msg) + '\n'
-            print(line_msg.encode('utf-8'))
             self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
-            # self.comm_task.mcu_serial.write(("Testin123456789ABCDEFGHIJKLMNOPQRSTUVWXYZNOWIKNOWMYABCLETSGOOUTANDPLAYWITHME\n").encode('utf-8'))
-
-
+            self.comm_task.mcu_serial.flushOutput()
+    
+    @pyqtSlot(str, float)
+    def sendParameterCommand(self, which, val):
+        if self.comm_task.connected:
+            json_msg = {} 
+            json_msg["pC"] = which
+            json_msg["val"] = val
+            line_msg = json.dumps(json_msg) + '\n'
+            self.comm_task.mcu_serial.write(line_msg.encode('utf-8'))
             self.comm_task.mcu_serial.flushOutput()
 
-
-    @pyqtSlot()
-    def test(self):
-        print('Hello')
-
-    @pyqtSlot(QXYSeries, int)
-    def update_pressuredata_series(self, series, len_data):
-        self.xpressure += 1
-        # Get new data pt
-        y = np.sin(self.xpressure/5) + random.uniform(-.1, .1)
-        point = QPointF(self.xpressure, y)
-        if(len(series) > len_data + 5):
-            series.remove(0)
-        series.append(point)
-
-    @pyqtSlot(QXYSeries, QXYSeries, int)
-    def update_flowdata_series(self, series1, series2, len_data):
-        self.xflow += 1
-        # Get new data pt
-        y1 = np.sin(self.xflow/5) + random.uniform(-1, 1)
-        y2 = np.sin(self.xflow/5)
-        point1 = QPointF(self.xflow, y1)
-        point2 = QPointF(self.xflow, y2)
-        if(len(series1) > len_data + 5):
-            series1.remove(0)
-            series2.remove(0)
-        series1.append(point1)
-        series2.append(point2)
-
-    @pyqtSlot(QXYSeries, int)
-    def update_volumedata_series(self, series, len_data):
-        self.xvolume += 1
-        # Get new data pt
-        y = np.sin(self.xvolume/3) + random.uniform(-.5, .5)
-        point = QPointF(self.xvolume, y)
-        if(len(series) > len_data + 5):
-            series.remove(0)
-        series.append(point)
-
-    @pyqtSlot(QXYSeries, int)
-    def update_peepdata_series(self, series, len_data):
-        self.xpeep += 1
-        # Get new data pt
-        y = np.sin(self.xpeep/1) + random.uniform(-.2, .2)
-        point = QPointF(self.xpeep, y)
-        if(len(series) > len_data + 5):
-            series.remove(0)
-        series.append(point)
-
+    # @pyqtSlot(QXYSeries, int)
+    # def update_series(self, series, len_data):
+    #     self.xpressure += 1
+    #     # Get new data pt
+    #     y = np.sin(self.xpressure/5) + random.uniform(-.1, .1)
+    #     point = QPointF(self.xpressure, y)
+    #     if(len(series) > len_data + 5):
+    #         series.remove(0)
+    #     series.append(point)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -236,6 +224,8 @@ if __name__ == "__main__":
 
     #Connect Plot Update Signals
     pygui.comm_task.update_plot.connect(rootObject.updatePlot) 
+    pygui.comm_task.update_values.connect(rootObject.updateValuesRow)
+    pygui.comm_task.flush_plots.connect(rootObject.flushPlots)
 
     if not engine.rootObjects():
         sys.exit(-1)

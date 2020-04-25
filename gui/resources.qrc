@@ -4,6 +4,7 @@
     <file>qml/TheChartsCell.qml</file>
     <file>qml/OVGui.qml</file>
     <file>qml/CellBox.qml</file>
+    <file>qml/NumberBox.qml</file>
     <file>qml/SimpleChartView.qml</file>
     <file>qml/TimeAxis.qml</file>
     <file>qml/YAxis.qml</file>
