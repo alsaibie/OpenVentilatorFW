@@ -61,8 +61,6 @@ class UIManager : public OVThread {
             auto pot2val = pot2.getReading();
             auto pot3val = pot3.getReading();
 
-            char arr[10];
-            itoa(pot2val, arr, 10);
             /* Translated to Commands */
 
 
@@ -71,8 +69,7 @@ class UIManager : public OVThread {
             userInputMsg.system_mode = user_system_mode;
 
             /* Pot Inputs */
-            uint32_t adc_range = (2 ^ 12);
-
+            const uint32_t adc_range = (2 ^ 12);
             userInputMsg.flow_sp_lpm =
                 pot1val * (params.flow_rate_lpm_max - params.flow_rate_lpm_min) / adc_range + params.flow_rate_lpm_min;
             userInputMsg.rate_sp_hz =
@@ -138,6 +135,7 @@ class UIManager : public OVThread {
     /* Pubs */
     OVQueuePublisher<OVTopics::UserInput_msg_t> user_input_pub;
     OVTopics::UserInput_msg_t userInputMsg;
+
     /* Subs */
     OVQueueSubscriber<OVTopics::SystemStatus_msg_t> system_status_sub;
     SystemStatus_msg_t systemStatusMsg;

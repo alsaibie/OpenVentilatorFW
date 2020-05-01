@@ -28,6 +28,7 @@ class OVThread {
           initializedDelay(false) {
         thread_name = name;
     };
+    ~OVThread(){}
 
     inline static void task(void *arg) {
         OVThread *ptr = static_cast<OVThread *>(arg);

@@ -64,6 +64,11 @@ void StartOpenVentilator(void);
 #define USER_Btn_Pin GPIO_PIN_13
 #define USER_Btn_GPIO_Port GPIOC
 #define USER_Btn_EXTI_IRQn EXTI15_10_IRQn
+#define LIMSW1_Pin GPIO_PIN_0
+#define LIMSW1_GPIO_Port GPIOF
+#define LIMSW1_EXTI_IRQn EXTI0_IRQn
+#define LIMSW2_Pin GPIO_PIN_1
+#define LIMSW2_GPIO_Port GPIOF
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOH
 #define PSENS_Pin GPIO_PIN_0

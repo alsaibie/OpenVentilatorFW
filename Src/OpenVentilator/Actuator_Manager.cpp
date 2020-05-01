@@ -37,6 +37,9 @@ class ActuatorManager : public OVThread {
                     std::placeholders::_1)) {
   }
 
+   virtual ~ActuatorManager(){
+
+   }
  protected:
   virtual void run() {
 
@@ -66,6 +69,8 @@ class ActuatorManager : public OVThread {
         case Actuator_Modes::VelocityTrajectory:
           break;
         case Actuator_Modes::TorqueTrajectory:
+          break;
+        default:
           break;
       }
 

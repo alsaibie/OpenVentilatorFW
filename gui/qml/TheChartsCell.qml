@@ -45,6 +45,7 @@ CellBox {
     function flushPlot(series) {
         if (series.amountOfData > 1) {
             // series.remove(series.amountOfData)
+            //TODO: Fix it, it crashes when I attempt to flush
         }
     }
 

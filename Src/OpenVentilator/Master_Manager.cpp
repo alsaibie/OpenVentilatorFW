@@ -39,9 +39,18 @@ class MasterManager : public OVThread {
  protected:
   virtual void run() {
     while (1) {
+      /*
+       * The master manager controls the system state and and operation state
+       * The master manager will determine whether control is on or off board
+       * It will
+       * */
       safety_sub.receive();
       user_input_sub.receive();
       sensor_status_sub.receive();
+
+
+
+
 
       OpStatusMsg.input_source = UI::UserInputSource::Onboard;
       OpStatusMsg.operation_state = operation_state;
